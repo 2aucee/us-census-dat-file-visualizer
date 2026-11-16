@@ -14,9 +14,9 @@ py -m venv .venv
 
 Streamlit opens the website in your browser. Upload a `.dat`, `.txt`, `.csv`, or `.tsv` file. `.dat` files default to fixed-width mode. The known `sep23pub.dat` file is recognized by name and parsed with the included official field positions. For other fixed-width files, paste a CSV layout with `name,start,end` columns; positions are one-based and inclusive as in most record-layout documentation.
 
-The app shows a preview, missing-value and field summaries, numeric distributions/statistics, and category counts. You can optionally select a numeric weight field for descriptive weighted summaries. Weighted values are not a substitute for CPS survey-design variance estimation and do not account for replicate weights.
+The app recognizes both `sep23pub.dat` and `sep23pub.csv`. It previews 100 records and, when you explore a variable, reads only that field and an optional Census weight instead of loading every CSV column into memory. Common CPS supplement variables and documented response codes are shown with plain-English labels. The app shows missing-value and field summaries, numeric distributions/statistics, and category counts. You can optionally select a numeric weight field for descriptive weighted summaries. Weighted values are not a substitute for CPS survey-design variance estimation and do not account for replicate weights.
 
-The bundled `sep23pub.dat` positions come from the Census Bureau's [September 2023 CPS technical documentation](https://www2.census.gov/programs-surveys/cps/techdocs/cpssep23.pdf).
+The bundled `sep23pub.dat` positions and response labels come from the Census Bureau's [September 2023 CPS technical documentation](https://www2.census.gov/programs-surveys/cps/techdocs/cpssep23.pdf). Codes without a documented label in the app remain visible as their original value.
 
 ## Jupyter notebook
 

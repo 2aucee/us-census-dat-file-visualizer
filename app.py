@@ -14,8 +14,10 @@ from src.data_reader import (
     parse_fixed_width_layout,
     read_delimited,
     read_fixed_width,
+    read_sep23pub_csv,
     read_sep23pub_file,
 )
+from src.census_labels import VARIABLE_LABELS, label_responses, variable_label
 
 st.set_page_config(page_title="Census Data Explorer", page_icon="📊", layout="wide")
 sns.set_theme(style="whitegrid")
@@ -40,40 +42,72 @@ if uploaded_file is None:
 
 try:
     is_sep23pub = Path(uploaded_file.name).name.casefold() == "sep23pub.dat"
-    format_choice = st.radio(
-        "How is the file organized?",
-        ["Delimited / whitespace", "Fixed-width records"],
-        index=1 if uploaded_file.name.casefold().endswith(".dat") else 0,
-        horizontal=True,
-    )
-
-    if format_choice == "Delimited / whitespace":
-        text = decode_text(uploaded_file.getvalue())
-        delimiter_choice = st.selectbox(
-            "Field separator",
-            ["Detect automatically", "Comma", "Tab", "Pipe", "Whitespace"],
-        )
-        delimiter = {
-            "Detect automatically": None,
-            "Comma": ",",
-            "Tab": "\t",
-            "Pipe": "|",
-            "Whitespace": r"\s+",
-        }[delimiter_choice]
-        has_header = st.checkbox("First row contains column names", value=True)
-        data = read_delimited(text, delimiter=delimiter, has_header=has_header)
-        use_sep23_layout = False
-    else:
-        if is_sep23pub:
+    is_sep23pub_csv = Path(uploaded_file.name).name.casefold() == "sep23pub.csv"
+    if is_sep23pub or is_sep23pub_csv:
+        field_names, _ = load_sep23pub_layout()
+        preview_fields = [
+            name
+            for name in (
+                "PRTAGE",
+                "PESEX",
+                "PEEDUCA",
+                "GEREG",
+                "PRSUPVOL",
+                "PES16D",
+                "PTS16E",
+                "PES11",
+                "PES12",
+                "PES15",
+                "PES17",
+                "PES18",
+                "PWNRWGT",
+            )
+            if name in field_names
+        ]
+        if is_sep23pub_csv:
+            st.info(
+                "Recognized the September 2023 CPS CSV. The app reads a short preview "
+                "first, then only the selected variable and optional weight."
+            )
+            uploaded_file.seek(0)
+            preview = read_sep23pub_csv(
+                uploaded_file, columns=preview_fields, nrows=100
+            )
+        else:
             st.info("Using the official Census layout for sep23pub.dat.")
-            field_names, field_colspecs = load_sep23pub_layout()
             uploaded_file.seek(0)
             file_text = io.TextIOWrapper(uploaded_file, encoding="utf-8-sig")
             try:
-                preview = read_sep23pub_file(file_text, nrows=100)
+                preview = read_sep23pub_file(
+                    file_text, columns=preview_fields, nrows=100
+                )
             finally:
                 file_text.detach()
-            use_sep23_layout = True
+        use_sep23_layout = True
+    else:
+        format_choice = st.radio(
+            "How is the file organized?",
+            ["Delimited / whitespace", "Fixed-width records"],
+            index=1 if uploaded_file.name.casefold().endswith(".dat") else 0,
+            horizontal=True,
+        )
+
+        if format_choice == "Delimited / whitespace":
+            text = decode_text(uploaded_file.getvalue())
+            delimiter_choice = st.selectbox(
+                "Field separator",
+                ["Detect automatically", "Comma", "Tab", "Pipe", "Whitespace"],
+            )
+            delimiter = {
+                "Detect automatically": None,
+                "Comma": ",",
+                "Tab": "\t",
+                "Pipe": "|",
+                "Whitespace": r"\s+",
+            }[delimiter_choice]
+            has_header = st.checkbox("First row contains column names", value=True)
+            data = read_delimited(text, delimiter=delimiter, has_header=has_header)
+            use_sep23_layout = False
         else:
             st.caption(
                 "Use the Census documentation for this exact file and supplement. "
@@ -87,8 +121,7 @@ try:
             )
             field_names, field_colspecs = parse_fixed_width_layout(layout_text)
             use_sep23_layout = False
-        uploaded_file.seek(0)
-        if not use_sep23_layout:
+            uploaded_file.seek(0)
             with io.TextIOWrapper(uploaded_file, encoding="utf-8-sig") as file_text:
                 data = read_fixed_width(file_text, names=field_names, colspecs=field_colspecs)
 except (UnicodeDecodeError, ValueError, pd.errors.ParserError) as error:
@@ -101,30 +134,64 @@ if use_sep23_layout:
         st.stop()
 
     st.subheader("Data preview")
-    st.dataframe(preview, use_container_width=True)
+    readable_preview = preview.rename(columns=variable_label)
+    for column in preview.columns:
+        readable_preview[variable_label(column)] = label_responses(
+            column, preview[column]
+        )
+    st.dataframe(readable_preview, use_container_width=True)
     st.caption("Preview is limited to the first 100 records.")
     st.subheader("Explore a variable")
-    variable = st.selectbox("Variable to visualize", field_names)
+    show_all_fields = st.checkbox(
+        "Show all fields, including Census codes without built-in descriptions"
+    )
+    labeled_fields = [
+        name for name in field_names if name in VARIABLE_LABELS
+    ]
+    variable_options = field_names if show_all_fields else labeled_fields
+    if not variable_options:
+        variable_options = field_names
+        st.info("No built-in labels are available for this file's fields.")
+    default_variable = (
+        variable_options.index("PRSUPVOL")
+        if "PRSUPVOL" in variable_options
+        else 0
+    )
+    variable = st.selectbox(
+        "Variable to visualize",
+        variable_options,
+        index=default_variable,
+        format_func=variable_label,
+    )
     available_weights = [
         weight for weight in ("PWNRWGT", "PWSRWGT") if weight != variable
     ]
     weight_column = st.selectbox(
         "Optional weight field",
         ["Unweighted", *available_weights],
+        format_func=lambda name: (
+            "Unweighted"
+            if name == "Unweighted"
+            else variable_label(name)
+        ),
         help="These are the Census supplement weights. Weighted summaries here do not calculate CPS survey-design standard errors.",
     )
     columns_to_read = [variable]
     if weight_column != "Unweighted" and weight_column != variable:
         columns_to_read.append(weight_column)
-    uploaded_file.seek(0)
-    file_text = io.TextIOWrapper(uploaded_file, encoding="utf-8-sig")
     try:
-        data = read_sep23pub_file(file_text, columns=columns_to_read)
+        uploaded_file.seek(0)
+        if is_sep23pub_csv:
+            data = read_sep23pub_csv(uploaded_file, columns=columns_to_read)
+        else:
+            file_text = io.TextIOWrapper(uploaded_file, encoding="utf-8-sig")
+            try:
+                data = read_sep23pub_file(file_text, columns=columns_to_read)
+            finally:
+                file_text.detach()
     except (UnicodeDecodeError, ValueError, pd.errors.ParserError) as error:
         st.error(str(error))
         st.stop()
-    finally:
-        file_text.detach()
     if data.empty:
         st.warning("No records were found in the uploaded file.")
         st.stop()
@@ -162,7 +229,8 @@ else:
     )
     detail_data = data
 
-series = data[variable]
+series = label_responses(variable, data[variable]) if use_sep23_layout else data[variable]
+plot_variable = variable_label(variable) if use_sep23_layout else str(variable)
 is_numeric = pd.api.types.is_numeric_dtype(series)
 if is_numeric:
     chart_type = st.radio("Chart", ["Distribution", "Summary statistics"], horizontal=True)
@@ -185,7 +253,7 @@ if is_numeric:
         else:
             sns.histplot(data=chart_data, x="value", bins="auto", ax=axis)
             axis.set_ylabel("Count")
-        axis.set_xlabel(str(variable))
+        axis.set_xlabel(plot_variable)
         st.pyplot(figure)
         plt.close(figure)
     else:
@@ -218,7 +286,7 @@ else:
         figure, axis = plt.subplots(figsize=(9, max(4, min(9, len(counts) * 0.32))))
         counts.plot.barh(ax=axis)
         axis.set_xlabel(count_label)
-        axis.set_ylabel(str(variable))
+        axis.set_ylabel(plot_variable)
         st.pyplot(figure)
         plt.close(figure)
         st.caption("Showing up to 25 most frequent categories.")

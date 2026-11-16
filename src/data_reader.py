@@ -82,6 +82,44 @@ def read_sep23pub_file(
     )
 
 
+def read_sep23pub_csv(
+    text: str | TextIO,
+    *,
+    columns: Sequence[str] | None = None,
+    nrows: int | None = None,
+) -> pd.DataFrame:
+    """Read selected columns from the Census-delimited September 2023 CPS file."""
+    try:
+        frame = pd.read_csv(
+            io.StringIO(text) if isinstance(text, str) else text,
+            usecols=list(columns) if columns is not None else None,
+            nrows=nrows,
+            dtype={
+                name: str
+                for name in (
+                    "HRHHID",
+                    "HRHHID2",
+                    "GESTFIPS",
+                    "GTCBSA",
+                    "GTCO",
+                    "GTCBSAST",
+                    "GTMETSTA",
+                    "GTINDVPC",
+                    "GTCBSASZ",
+                    "GTCSA",
+                )
+                if columns is None or name in columns
+            },
+        )
+    except (pd.errors.ParserError, UnicodeDecodeError, ValueError) as error:
+        raise ValueError(f"Could not parse the SEP23PUB CSV file: {error}") from error
+    if frame.empty or len(frame.columns) == 0:
+        raise ValueError("The SEP23PUB CSV file has no records or selected columns.")
+    if columns is not None:
+        frame = frame.loc[:, list(columns)]
+    return frame
+
+
 def decode_text(contents: bytes) -> str:
     """Decode common Census text encodings, raising if neither is valid."""
     try:

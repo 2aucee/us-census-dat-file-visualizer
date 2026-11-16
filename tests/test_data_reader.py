@@ -1,4 +1,5 @@
 import pytest
+import pandas as pd
 
 from src.data_reader import (
     decode_text,
@@ -6,8 +7,10 @@ from src.data_reader import (
     parse_fixed_width_layout,
     read_delimited,
     read_fixed_width,
+    read_sep23pub_csv,
     read_sep23pub_file,
 )
+from src.census_labels import label_responses, variable_label
 
 
 def test_read_delimited_with_header():
@@ -24,6 +27,33 @@ def test_read_delimited_without_header():
     frame = read_delimited("30,A\n40,B\n", delimiter=",", has_header=False)
     assert frame.shape == (2, 2)
     assert frame.iloc[0].tolist() == [30, "A"]
+
+
+def test_read_sep23pub_csv_selected_columns_and_row_limit():
+    text = "HRHHID,PRSUPVOL,PWNRWGT\n00012,1,125.5\n00013,2,80.0\n"
+    frame = read_sep23pub_csv(
+        text, columns=["HRHHID", "PRSUPVOL"], nrows=1
+    )
+    assert frame.to_dict("list") == {"HRHHID": ["00012"], "PRSUPVOL": [1]}
+
+
+def test_read_sep23pub_csv_keeps_identifier_codes_as_text():
+    frame = read_sep23pub_csv("GESTFIPS,PRTAGE\n06,35\n")
+    assert frame.loc[0, "GESTFIPS"] == "06"
+    assert frame.loc[0, "PRTAGE"] == 35
+
+
+def test_census_variables_and_documented_categories_are_readable():
+    assert variable_label("PES16D") == "How often did you volunteer? (PES16D)"
+    assert label_responses("PRSUPVOL", pd.Series([-1, 1, 2])).tolist() == [
+        "Not in universe",
+        "Volunteer",
+        "Not a volunteer",
+    ]
+    assert label_responses("PEEDUCA", pd.Series([39, 43])).tolist() == [
+        "High school diploma or equivalent",
+        "Bachelor's degree",
+    ]
 
 
 def test_parse_fixed_width_layout_and_read():
