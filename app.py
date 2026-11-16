@@ -14,7 +14,7 @@ from src.census_labels import (
     prepare_chart_series,
     unique_variable_labels,
     variable_label,
-    volunteer_donation_respondent_mask,
+    volunteer_respondent_mask,
 )
 
 st.set_page_config(page_title="Census Data Explorer", page_icon="📊", layout="wide")
@@ -174,22 +174,15 @@ weight_column = st.selectbox(
 )
 volunteer_filter_fields = []
 if is_recognized_cps_csv:
-    missing_donation_fields = [
-        name for name in ("PES17", "PES18") if name not in field_names
-    ]
     volunteer_filter_fields = [
         name for name in ("PES16", "PES16A") if name in field_names
     ]
-    if missing_donation_fields or not volunteer_filter_fields:
-        missing_fields = missing_donation_fields or ["PES16 or PES16A"]
+    if not volunteer_filter_fields:
         st.error(
-            "This Census file is missing the fields needed to identify people "
-            f"with volunteer and donation data: {', '.join(missing_fields)}."
+            "This Census file is missing the volunteer fields needed to filter "
+            "people without volunteering data (PES16 and PES16A)."
         )
         st.stop()
-    volunteer_filter_fields.extend(
-        name for name in ("PES17", "PES18") if name in field_names
-    )
 
 columns_to_read = [variable]
 if weight_column != "Unweighted":
@@ -215,7 +208,7 @@ if data.empty:
 
 if is_recognized_cps_csv:
     try:
-        respondent_mask = volunteer_donation_respondent_mask(data)
+        respondent_mask = volunteer_respondent_mask(data)
     except ValueError as error:
         st.error(str(error))
         st.stop()
@@ -223,8 +216,7 @@ if is_recognized_cps_csv:
     data = data.loc[respondent_mask].copy()
     if data.empty:
         st.warning(
-            "No people have applicable volunteer responses and responses to both "
-            "donation questions in this file."
+            "No people have recorded answers to the volunteer questions in this file."
         )
         st.stop()
 
@@ -318,9 +310,9 @@ if is_recognized_cps_csv:
     st.caption(
         f"Page {page_number:,} of {page_count:,}; showing {len(table_columns):,} "
         f"of {len(field_names):,} columns. Showing {records:,} people with an "
-        "applicable response to at least one volunteering question and both "
-        "donation questions. No, don't know, refusals, and no-answer categories "
-        "are retained; only blank or not-in-universe screening responses are excluded."
+        "answer to at least one volunteering question. Donation answers do not "
+        "affect who is shown. No, don't know, refusals, and no-answer categories "
+        "are retained; only blank or not-in-universe volunteer responses are excluded."
     )
 else:
     st.dataframe(table_page, width="stretch")

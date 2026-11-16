@@ -17,7 +17,7 @@ from src.census_labels import (
     prepare_chart_series,
     unique_variable_labels,
     variable_label,
-    volunteer_donation_respondent_mask,
+    volunteer_respondent_mask,
 )
 
 
@@ -168,32 +168,33 @@ def test_official_cps_metadata_labels_additional_fields_and_codes():
     ).tolist() == [25, 80]
 
 
-def test_volunteer_donation_filter_keeps_all_answer_categories():
+def test_volunteer_filter_keeps_all_answer_categories():
     responses = pd.DataFrame(
         {
             "PES16": [1, -1, -9, -1, 2, 1, 1, 1],
             "PES16A": [-1, 1, -1, -1, 2, -1, -1, -1],
-            "PES17": [1, 1, 2, 1, -9, 1, -1, ""],
-            "PES18": [2, 1, -2, 1, 1, -1, 1, 1],
         }
     )
-    assert volunteer_donation_respondent_mask(responses).tolist() == [
+    assert volunteer_respondent_mask(responses).tolist() == [
         True,
         True,
         True,
         False,
         True,
-        False,
-        False,
-        False,
+        True,
+        True,
+        True,
     ]
 
 
-def test_volunteer_donation_filter_requires_both_donation_fields():
-    with pytest.raises(ValueError, match="PES18"):
-        volunteer_donation_respondent_mask(
-            pd.DataFrame({"PES16": [1], "PES17": [1]})
-        )
+def test_volunteer_filter_does_not_depend_on_donation_fields():
+    responses = pd.DataFrame({"PES16": [-1, 1], "PES17": [-1, -1]})
+    assert volunteer_respondent_mask(responses).tolist() == [False, True]
+
+
+def test_volunteer_filter_requires_a_volunteer_field():
+    with pytest.raises(ValueError, match="PES16 nor PES16A"):
+        volunteer_respondent_mask(pd.DataFrame({"PES17": [1], "PES18": [2]}))
 
 
 def test_common_cps_special_codes_are_labeled_for_other_fields():
