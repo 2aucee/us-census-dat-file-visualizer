@@ -74,6 +74,7 @@ def test_census_variables_and_documented_categories_are_readable():
         "High school diploma or equivalent (39)",
         "Bachelor's degree (43)",
     ]
+    assert str(label_responses("PRSUPVOL", pd.Series([-1, 1, 2])).dtype) == "string"
 
 
 def test_common_cps_special_codes_are_labeled_for_other_fields():
@@ -84,7 +85,7 @@ def test_common_cps_special_codes_are_labeled_for_other_fields():
         "Refused (-3)",
         "Don't know (-2)",
         "N/A",
-        1,
+        "1",
     ]
 
 
@@ -95,7 +96,7 @@ def test_not_in_universe_is_n_a_for_documented_and_undocumented_fields():
     ]
     assert label_responses(
         "PES16D", pd.Series([-1, 5]), documented=False
-    ).tolist() == ["N/A", 5]
+    ).tolist() == ["N/A", "5"]
 
 
 def test_parse_fixed_width_layout_and_read():

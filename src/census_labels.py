@@ -271,4 +271,4 @@ def label_responses(
             return f"Other response ({code})"
         return value
 
-    return values.map(label)
+    return values.map(label).astype("string")
