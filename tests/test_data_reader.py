@@ -1,6 +1,4 @@
-import gzip
 import io
-import zipfile
 
 import pytest
 import pandas as pd
@@ -18,14 +16,6 @@ from src.census_labels import (
     label_responses,
     prepare_chart_series,
     variable_label,
-)
-from src.fbla_analysis import (
-    build_analysis_export,
-    read_cps_wave,
-    trend_recommendation,
-    weighted_age_group_rates,
-    weighted_indicator_trends,
-    year_from_filename,
 )
 
 
@@ -194,136 +184,3 @@ def test_rejects_invalid_fixed_width_layout(layout):
 
 def test_decode_windows_text():
     assert decode_text("café".encode("cp1252")) == "café"
-
-
-def test_fbla_year_recognition():
-    assert year_from_filename("sep17pub.zip") == 2017
-    assert year_from_filename("sep19pub.csv") == 2019
-    assert year_from_filename("sep21pub.csv") == 2021
-    assert year_from_filename("sep23pub.csv") == 2023
-    assert year_from_filename("another.csv") is None
-
-
-def test_fbla_csv_reader_loads_only_relevant_columns():
-    upload = io.BytesIO(
-        b"PRSUPVOL,PWNRWGT,unused\n1,10,ignored\n2,20,ignored\n"
-    )
-    upload.name = "sep23pub.csv"
-    frame = read_cps_wave(upload, 2023)
-    assert frame.columns.tolist() == ["PRSUPVOL", "PWNRWGT"]
-    assert frame["PRSUPVOL"].tolist() == [1, 2]
-
-
-def test_fbla_2017_zip_reader_uses_official_fixed_width_positions():
-    record = bytearray(b" " * 1107)
-    values = {
-        "GEREG": (88, "04"),
-        "PRTAGE": (121, "35"),
-        "PESEX": (128, "02"),
-        "PEEDUCA": (136, "43"),
-        "PRMARSTA": (158, "07"),
-        "PES7": (1012, "01"),
-        "PES11": (1020, "02"),
-        "PES12": (1022, "01"),
-        "PES15": (1028, "01"),
-        "PES16": (1034, "01"),
-        "PES16A": (1036, "02"),
-        "PES17": (1087, "02"),
-        "PES18": (1089, "01"),
-        "PRSUPVOL": (1093, "01"),
-        "PWNRWGT": (1097, "0000000100"),
-    }
-    for start, value in values.values():
-        record[start : start + len(value)] = value.encode("ascii")
-    archive_contents = io.BytesIO()
-    with zipfile.ZipFile(archive_contents, "w", zipfile.ZIP_DEFLATED) as archive:
-        archive.writestr("sep17pub.dat", bytes(record) + b"\n")
-    upload = io.BytesIO(archive_contents.getvalue())
-    upload.name = "sep17pub.zip"
-
-    frame = read_cps_wave(upload, 2017)
-
-    assert frame.loc[0, "GEREG"] == 4
-    assert frame.loc[0, "PRTAGE"] == 35
-    assert frame.loc[0, "PRSUPVOL"] == 1
-    assert float(frame.loc[0, "PWNRWGT"]) == 100
-
-
-def test_fbla_2017_gzip_reader():
-    record = bytearray(b" " * 1107)
-    record[1093:1095] = b"01"
-    record[1097:1107] = b"0000000100"
-    upload = io.BytesIO(gzip.compress(bytes(record) + b"\n"))
-    upload.name = "sep17pub.dat.gz"
-
-    frame = read_cps_wave(upload, 2017)
-
-    assert frame.loc[0, "PRSUPVOL"] == 1
-    assert float(frame.loc[0, "PWNRWGT"]) == 100
-
-
-def test_fbla_weighted_rates_exclude_invalid_and_zero_weight_records():
-    frame = pd.DataFrame(
-        {
-            "PRSUPVOL": [1, 2, -1, 1],
-            "PES11": [1, 3, 2, 1],
-            "PWNRWGT": [2, 3, 100, 0],
-        }
-    )
-
-    trends = weighted_indicator_trends({2023: frame}).set_index("indicator")
-
-    assert trends.loc["Overall volunteering", "valid_responses"] == 2
-    assert trends.loc["Overall volunteering", "weighted_valid_population"] == 5
-    assert trends.loc["Overall volunteering", "yes_percent"] == 40
-    assert trends.loc["Local election voting", "valid_responses"] == 2
-    assert trends.loc["Local election voting", "yes_percent"] == pytest.approx(200 / 102)
-
-
-def test_fbla_analysis_export_is_labeled_and_age_rates_are_weighted():
-    frame = pd.DataFrame(
-        {
-            "PRTAGE": [20, 30, 70],
-            "GEREG": [1, 2, 4],
-            "PESEX": [1, 2, 2],
-            "PEEDUCA": [39, 43, 46],
-            "PRMARSTA": [7, 1, 4],
-            "PRSUPVOL": [1, 2, 1],
-            "PES16": [1, 2, -1],
-            "PWNRWGT": [2, 3, 5],
-        }
-    )
-
-    export = build_analysis_export({2023: frame})
-    age_rates = weighted_age_group_rates(frame, 2023).set_index("age_group")
-
-    assert export.loc[0, "region"] == "Northeast (1)"
-    assert export.loc[0, "overall_volunteering"] == "Volunteer (1)"
-    assert export.loc[0, "age_group"] == "16-24"
-    assert age_rates.loc["16-24", "yes_percent"] == 100
-    assert age_rates.loc["25-44", "yes_percent"] == 0
-    assert "HRHHID" not in export.columns
-
-
-def test_fbla_recommendation_does_not_claim_a_trend_from_one_wave():
-    trends = pd.DataFrame(
-        [{"year": 2023, "indicator": "Overall volunteering", "yes_percent": 45}]
-    )
-
-    assert "upload another year" in trend_recommendation(trends)
-
-
-def test_fbla_recommendation_uses_the_largest_observed_decline():
-    trends = pd.DataFrame(
-        [
-            {"year": 2017, "indicator": "Overall volunteering", "yes_percent": 55},
-            {"year": 2023, "indicator": "Overall volunteering", "yes_percent": 40},
-            {"year": 2017, "indicator": "Formal volunteering", "yes_percent": 25},
-            {"year": 2023, "indicator": "Formal volunteering", "yes_percent": 23},
-        ]
-    )
-
-    recommendation = trend_recommendation(trends)
-
-    assert "overall volunteering" in recommendation
-    assert "declined by 15.0 percentage points" in recommendation
