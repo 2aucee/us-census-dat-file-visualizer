@@ -12,6 +12,20 @@ from typing import TextIO
 import pandas as pd
 
 
+TEXT_CODE_COLUMNS = {
+    "HRHHID",
+    "HRHHID2",
+    "GESTFIPS",
+    "GTCBSA",
+    "GTCO",
+    "GTCBSAST",
+    "GTMETSTA",
+    "GTINDVPC",
+    "GTCBSASZ",
+    "GTCSA",
+}
+
+
 def load_sep23pub_layout() -> tuple[list[str], list[tuple[int, int]]]:
     """Load Census-documented positions for the September 2023 public CPS file."""
     layout_path = Path(__file__).parent / "layouts" / "sep23pub_layout.json"
@@ -96,18 +110,7 @@ def read_sep23pub_csv(
             nrows=nrows,
             dtype={
                 name: str
-                for name in (
-                    "HRHHID",
-                    "HRHHID2",
-                    "GESTFIPS",
-                    "GTCBSA",
-                    "GTCO",
-                    "GTCBSAST",
-                    "GTMETSTA",
-                    "GTINDVPC",
-                    "GTCBSASZ",
-                    "GTCSA",
-                )
+                for name in TEXT_CODE_COLUMNS
                 if columns is None or name in columns
             },
         )
@@ -172,8 +175,11 @@ def read_delimited(
     has_header: bool = True,
     columns: Sequence[str] | None = None,
     nrows: int | None = None,
+    row_offset: int = 0,
 ) -> pd.DataFrame:
-    """Read delimited records, optionally selecting columns and limiting rows."""
+    """Read delimited records, optionally selecting columns or one page of rows."""
+    if row_offset < 0:
+        raise ValueError("The row offset cannot be negative.")
     stream = io.StringIO(text) if isinstance(text, str) else text
     position = stream.tell()
     sample_lines = []
@@ -204,8 +210,14 @@ def read_delimited(
             header=0 if has_header else None,
             usecols=list(columns) if columns is not None else None,
             nrows=nrows,
+            skiprows=(
+                range(1 if has_header else 0, row_offset + (1 if has_header else 0))
+                if row_offset
+                else None
+            ),
+            dtype={name: str for name in TEXT_CODE_COLUMNS},
         )
-    except (pd.errors.ParserError, UnicodeError) as error:
+    except (pd.errors.ParserError, UnicodeError, ValueError) as error:
         raise ValueError(f"Could not parse the delimited file: {error}") from error
 
 

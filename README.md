@@ -12,9 +12,9 @@ py -m venv .venv
 .\.venv\Scripts\python.exe -m streamlit run app.py
 ```
 
-Streamlit opens the website in your browser. Upload a `.csv` file to see its table preview and explore a column with a chart or summary.
+Streamlit opens the website in your browser. Upload a `.csv` file to page through its rows and columns, then chart a column.
 
-Choose a preview size of 100, 500, or 1,000 rows. Common CPS files (`sep19pub.csv`, `sep21pub.csv`, and `sep23pub.csv`) show readable variable and response labels, including `N/A` for not-in-universe values. Other CSV files are shown with their original headers and values. The table keeps the imported data visible; charts and summaries are available when you choose a column.
+The table is paginated so large files stay responsive; charts and record counts use every row. Recognized CPS files open in a student-friendly view of demographics and volunteer data, with Census field codes hidden and documented response codes translated to words. Open **Census display options** to show every column (including IDs, weights, and survey-processing details) or reveal codes when needed. In the table, choose which of the available columns to display. `N/A` means the question did not apply to that person. Other CSV files keep their original headers and values because the app cannot safely guess the meaning of arbitrary codes.
 
 Common CPS code labels use the Census Bureau's [September 2019](https://www2.census.gov/programs-surveys/cps/techdocs/cpssept19.pdf), [September 2021](https://www2.census.gov/programs-surveys/cps/techdocs/cpssept21.pdf), and [September 2023](https://www2.census.gov/programs-surveys/cps/techdocs/cpssep23.pdf) documentation. Undocumented values are left unchanged rather than guessed.
 

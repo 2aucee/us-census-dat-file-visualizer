@@ -8,13 +8,8 @@ import pandas as pd
 import seaborn as sns
 import streamlit as st
 
-from src.data_reader import (
-    load_sep23pub_layout,
-    read_delimited,
-    read_sep23pub_csv,
-)
+from src.data_reader import read_delimited
 from src.census_labels import (
-    VARIABLE_LABELS,
     label_responses,
     prepare_chart_series,
     variable_label,
@@ -35,254 +30,260 @@ uploaded_file = st.file_uploader(
     type=["csv"],
 )
 
-preview_rows = st.selectbox(
-    "Rows to show in the preview",
-    [100, 500, 1_000],
-    index=1,
-    format_func=lambda rows: f"{rows:,} rows",
-    help="The preview is capped at 1,000 rows to keep wide files responsive.",
+STUDENT_FRIENDLY_CPS_FIELDS = (
+    "PRTAGE",
+    "PESEX",
+    "PEEDUCA",
+    "PEMARITL",
+    "PRMARSTA",
+    "GEREG",
+    "GESTFIPS",
+    "HEFAMINC",
+    "PRSUPVOL",
+    "PES16",
+    "PES16D",
+    "PTS16E",
+    "PES17",
+    "PES18",
 )
 
 if uploaded_file is None:
-    st.info(
-        "Upload a file to begin. The SEP23PUB layout is included; other fixed-width files need their official record layout."
-    )
+    st.info("Upload a file to begin.")
     st.stop()
 
 try:
-    is_sep23pub_csv = Path(uploaded_file.name).name.casefold() == "sep23pub.csv"
-    is_sep19pub_csv = Path(uploaded_file.name).name.casefold() == "sep19pub.csv"
-    is_sep21pub_csv = Path(uploaded_file.name).name.casefold() == "sep21pub.csv"
-    is_recognized_cps_csv = (
-        is_sep19pub_csv or is_sep21pub_csv or is_sep23pub_csv
+    upload_name = Path(uploaded_file.name).name.casefold()
+    release = next(
+        (
+            year
+            for year in ("2019", "2021", "2023")
+            if upload_name == f"sep{year[-2:]}pub.csv"
+        ),
+        None,
     )
-    if is_sep23pub_csv:
-        field_names, _ = load_sep23pub_layout()
-        preview_fields = [
-            name
-            for name in (
-                "PRTAGE",
-                "PESEX",
-                "PEEDUCA",
-                "GEREG",
-                "PRSUPVOL",
-                "PES16D",
-                "PTS16E",
-                "PES11",
-                "PES12",
-                "PES15",
-                "PES17",
-                "PES18",
-                "PWNRWGT",
-            )
-            if name in field_names
+    is_recognized_cps_csv = release is not None
+    uploaded_file.seek(0)
+    file_text = io.TextIOWrapper(uploaded_file, encoding="utf-8-sig")
+    try:
+        header_preview = read_delimited(file_text, nrows=1)
+    finally:
+        file_text.detach()
+    field_names = list(header_preview.columns)
+    if is_recognized_cps_csv:
+        field_names = [
+            name for name in field_names if not str(name).upper().startswith("FILLER")
         ]
+    if not field_names:
+        st.warning("No columns were found. Check that the CSV has a header row.")
+        st.stop()
+
+    if is_recognized_cps_csv:
         st.info(
-            "Recognized the September 2023 CPS CSV. The app reads a short preview "
-            "first, then only the selected variable and optional weight."
+            f"Recognized the September {release} CPS CSV. Census labels are "
+            "shown where the official documentation defines them."
         )
-        uploaded_file.seek(0)
-        preview = read_sep23pub_csv(
-            uploaded_file, columns=preview_fields, nrows=preview_rows
-        )
-        use_sep23_layout = True
-    else:
-        uploaded_file.seek(0)
-        file_text = io.TextIOWrapper(uploaded_file, encoding="utf-8-sig")
-        try:
-            preview = read_delimited(file_text, nrows=preview_rows)
-        finally:
-            file_text.detach()
-        field_names = list(preview.columns)
-        data = preview
-        is_streamed_delimited = True
-        use_sep23_layout = False
 except (UnicodeDecodeError, ValueError, pd.errors.ParserError) as error:
     st.error(str(error))
     st.stop()
 
-if use_sep23_layout:
-    if preview.empty or len(preview.columns) == 0:
-        st.warning("No records or fields were found in the uploaded file.")
-        st.stop()
-
-    st.subheader("Data preview")
-    readable_preview = preview.rename(columns=variable_label)
-    for column in preview.columns:
-        readable_preview[variable_label(column)] = label_responses(
-            column, preview[column]
+st.subheader("Explore a variable")
+include_codes = False
+show_all_cps_fields = False
+if is_recognized_cps_csv:
+    with st.expander("Census display options"):
+        show_all_cps_fields = st.checkbox(
+            "Show all Census columns, including IDs and survey-processing fields",
+            help="The student view hides household IDs, weights, flags, and other technical fields. Turn this on to access every column.",
         )
-    st.dataframe(readable_preview, width="stretch")
-    st.caption(f"Preview shows up to {preview_rows:,} records.")
-    st.caption(
-        "CPS special values are spelled out where they occur (for example, "
-        "Not in universe (-1), Don't know (-2), Refused (-3), and No answer (-9)). "
-        "The original code stays in parentheses."
-    )
-    st.subheader("Explore a variable")
-    show_all_fields = st.checkbox(
-        "Show all fields, including Census codes without built-in descriptions"
-    )
-    labeled_fields = [
-        name for name in field_names if name in VARIABLE_LABELS
-    ]
-    variable_options = field_names if show_all_fields else labeled_fields
-    if not variable_options:
-        variable_options = field_names
-        st.info("No built-in labels are available for this file's fields.")
-    default_variable = (
-        variable_options.index("PRSUPVOL")
-        if "PRSUPVOL" in variable_options
-        else 0
-    )
-    variable = st.selectbox(
-        "Variable to visualize",
-        variable_options,
-        index=default_variable,
-        format_func=variable_label,
-    )
-    available_weights = [
-        weight for weight in ("PWNRWGT", "PWSRWGT") if weight != variable
-    ]
-    weight_column = st.selectbox(
-        "Optional weight field",
-        ["Unweighted", *available_weights],
-        format_func=lambda name: (
-            "Unweighted"
-            if name == "Unweighted"
-            else variable_label(name)
-        ),
-        help="These are the Census supplement weights. Weighted summaries here do not calculate CPS survey-design standard errors.",
-    )
-    columns_to_read = [variable]
-    if weight_column != "Unweighted" and weight_column != variable:
-        columns_to_read.append(weight_column)
-    try:
-        uploaded_file.seek(0)
-        data = read_sep23pub_csv(uploaded_file, columns=columns_to_read)
-    except (UnicodeDecodeError, ValueError, pd.errors.ParserError) as error:
-        st.error(str(error))
-        st.stop()
-    if data.empty:
-        st.warning("No records were found in the uploaded file.")
-        st.stop()
+        include_codes = st.checkbox(
+            "Show Census codes next to names and responses",
+            help="Codes are hidden by default. Numeric measurements such as age and hours remain numbers.",
+        )
 
-    metric_columns = st.columns(3)
-    metric_columns[0].metric("Records", f"{len(data):,}")
-    metric_columns[1].metric("Fields", f"{len(field_names):,}")
-    metric_columns[2].metric(
-        "Missing cells in preview",
-        f"{int(preview.isna().sum().sum()):,}",
-    )
-    detail_data = preview
+if is_recognized_cps_csv and not show_all_cps_fields:
+    available_fields = [
+        name for name in STUDENT_FRIENDLY_CPS_FIELDS if name in field_names
+    ]
+    if not available_fields:
+        available_fields = field_names
 else:
-    if data.empty or len(data.columns) == 0:
-        st.warning("No records or columns were found. Check the file format and record layout.")
-        st.stop()
+    available_fields = field_names
 
-    st.subheader("Data overview")
-    if is_streamed_delimited:
-        if is_recognized_cps_csv:
-            release = "2019" if is_sep19pub_csv else "2021" if is_sep21pub_csv else "2023"
-            st.info(
-                f"Recognized the September {release} CPS CSV. The app reads only "
-                "the selected variable and optional weight across the full file."
+default_variable = (
+    available_fields.index("PRSUPVOL")
+    if is_recognized_cps_csv and "PRSUPVOL" in available_fields
+    else 0
+)
+variable = st.selectbox(
+    "Variable to visualize",
+    available_fields,
+    index=default_variable,
+    format_func=lambda name: (
+        variable_label(
+            str(name), year=release, include_code=include_codes
+        )
+        if is_recognized_cps_csv
+        else str(name)
+    ),
+    key="variable_to_visualize",
+)
+if is_recognized_cps_csv:
+    st.caption(
+        "Showing student-friendly demographic and volunteer fields. Enable all "
+        "Census columns above to find the full codebook, IDs, weights, and survey details."
+    )
+    default_table_fields = available_fields
+    table_columns = st.multiselect(
+        "Columns in the table",
+        options=available_fields,
+        default=default_table_fields,
+        format_func=lambda name: variable_label(
+            str(name), year=release, include_code=include_codes
+        ),
+        key=(
+            "all_census_table_columns"
+            if show_all_cps_fields
+            else "student_census_table_columns"
+        ),
+    )
+else:
+    table_columns = field_names
+
+if not table_columns:
+    st.info("Choose at least one column to show in the table.")
+    st.stop()
+
+available_weights = (
+    [name for name in ("PWNRWGT", "PWSRWGT") if name in field_names and name != variable]
+    if is_recognized_cps_csv
+    else []
+)
+weight_column = st.selectbox(
+    "Optional weight field",
+    ["Unweighted", *available_weights],
+    format_func=lambda name: (
+        "Unweighted"
+        if name == "Unweighted" or not is_recognized_cps_csv
+        else variable_label(
+            str(name), year=release, include_code=include_codes
+        )
+    ),
+    help="Weighted summaries are descriptive only and do not account for CPS survey-design standard errors.",
+)
+columns_to_read = [variable]
+if weight_column != "Unweighted":
+    columns_to_read.append(weight_column)
+
+try:
+    uploaded_file.seek(0)
+    file_text = io.TextIOWrapper(uploaded_file, encoding="utf-8-sig")
+    try:
+        data = read_delimited(file_text, columns=columns_to_read)
+    finally:
+        file_text.detach()
+except (UnicodeDecodeError, ValueError, pd.errors.ParserError) as error:
+    st.error(str(error))
+    st.stop()
+
+if data.empty:
+    st.warning("No data rows were found in the uploaded CSV.")
+    st.stop()
+
+records = len(data)
+rows_per_page = st.selectbox(
+    "Rows per table page",
+    [50, 100, 250, 500],
+    index=1,
+    format_func=lambda rows: f"{rows:,} rows",
+)
+page_count = max(1, (records + rows_per_page - 1) // rows_per_page)
+upload_signature = (uploaded_file.name, uploaded_file.size)
+if st.session_state.get("_table_upload") != upload_signature:
+    st.session_state["_table_upload"] = upload_signature
+    st.session_state["table_page"] = 1
+if st.session_state.get("table_page", 1) > page_count:
+    st.session_state["table_page"] = page_count
+page_number = st.number_input(
+    "Table page",
+    min_value=1,
+    max_value=page_count,
+    step=1,
+    key="table_page",
+)
+row_offset = (page_number - 1) * rows_per_page
+try:
+    uploaded_file.seek(0)
+    file_text = io.TextIOWrapper(uploaded_file, encoding="utf-8-sig")
+    try:
+        table_page = read_delimited(
+            file_text,
+            columns=table_columns,
+            nrows=rows_per_page,
+            row_offset=row_offset,
+        )
+    finally:
+        file_text.detach()
+except (UnicodeDecodeError, ValueError, pd.errors.ParserError) as error:
+    st.error(str(error))
+    st.stop()
+
+metric_columns = st.columns(3)
+metric_columns[0].metric("Records", f"{records:,}")
+metric_columns[1].metric("Columns in file", f"{len(field_names):,}")
+metric_columns[2].metric(
+    "Blank values in selected column",
+    f"{int(data[variable].isna().sum()):,}",
+)
+st.subheader("Data table")
+if is_recognized_cps_csv:
+    readable_table = table_page.copy()
+    column_labels = {
+        column: variable_label(
+            str(column), year=release, include_code=include_codes
+        )
+        for column in table_page.columns
+    }
+    readable_table.columns = list(column_labels.values())
+    for column in table_page.columns:
+        readable_table[column_labels[column]] = label_responses(
+            str(column),
+            table_page[column],
+            year=release,
+            include_code=include_codes,
+        )
+    st.dataframe(
+        readable_table,
+        width="stretch",
+        column_config={
+            label: st.column_config.Column(
+                label,
+                help=f"Census variable: {name}",
+                width="large",
             )
-            readable_preview = preview.rename(columns=variable_label)
-            for column in preview.columns:
-                readable_preview[variable_label(str(column))] = label_responses(
-                    str(column), preview[column]
-                )
-            st.dataframe(readable_preview, width="stretch")
-            st.caption(
-                "Not-in-universe (-1) values are shown as N/A. Response labels "
-                "are shown when available; other values retain their original code."
-            )
-        else:
-            st.dataframe(preview, width="stretch")
-        st.caption(f"Preview shows up to {preview_rows:,} rows.")
+            for name, label in column_labels.items()
+        },
+    )
+    st.caption(
+        f"Page {page_number:,} of {page_count:,}; showing {len(table_columns):,} "
+        f"of {len(field_names):,} columns. The chart and record count use all "
+        f"{records:,} rows. {'Census codes are shown' if include_codes else 'Census codes are hidden'}; "
+        "age and hours remain numeric."
+    )
+else:
+    st.dataframe(table_page, width="stretch")
+    st.caption(
+        f"Page {page_number:,} of {page_count:,}. The chart and record count use "
+        "all rows. Headers and values are kept as provided because this CSV has "
+        "no bundled codebook."
+    )
 
-        st.subheader("Explore a variable")
-        numeric_columns = preview.select_dtypes(include="number").columns.tolist()
-        default_variable = (
-            field_names.index("PRSUPVOL")
-            if is_recognized_cps_csv and "PRSUPVOL" in field_names
-            else 0
-        )
-        variable = st.selectbox(
-            "Variable to visualize",
-            field_names,
-            index=default_variable,
-            format_func=lambda name: (
-                variable_label(str(name))
-                if is_recognized_cps_csv
-                else str(name)
-            ),
-        )
-        weight_options = ["Unweighted"] + numeric_columns
-        weight_column = st.selectbox(
-            "Optional weight field",
-            weight_options,
-            format_func=lambda name: (
-                "Unweighted"
-                if name == "Unweighted"
-                else variable_label(str(name))
-                if is_recognized_cps_csv
-                else str(name)
-            ),
-            help="Weighted summaries are descriptive only; this does not account for CPS replicate weights or survey design.",
-        )
-        columns_to_read = [variable]
-        if weight_column != "Unweighted" and weight_column != variable:
-            columns_to_read.append(weight_column)
-        uploaded_file.seek(0)
-        file_text = io.TextIOWrapper(uploaded_file, encoding="utf-8-sig")
-        try:
-            data = read_delimited(
-                file_text,
-                columns=columns_to_read,
-            )
-        finally:
-            file_text.detach()
-        if data.empty:
-            st.warning("No records were found for this selection.")
-            st.stop()
-
-        metric_columns = st.columns(3)
-        metric_columns[0].metric("Records", f"{len(data):,}")
-        metric_columns[1].metric("Fields", f"{len(preview.columns):,}")
-        metric_columns[2].metric(
-            "Missing cells in preview",
-            f"{int(preview.isna().sum().sum()):,}",
-        )
-        detail_data = preview
-    else:
-        metric_columns = st.columns(3)
-        metric_columns[0].metric("Records", f"{len(data):,}")
-        metric_columns[1].metric("Fields", f"{len(data.columns):,}")
-        metric_columns[2].metric("Missing cells", f"{int(data.isna().sum().sum()):,}")
-        st.dataframe(data.head(preview_rows), width="stretch")
-        st.caption(f"Preview shows up to {preview_rows:,} rows.")
-
-        st.subheader("Explore a variable")
-        numeric_columns = data.select_dtypes(include="number").columns.tolist()
-        all_columns = data.columns.tolist()
-        variable = st.selectbox("Variable to visualize", all_columns)
-        weight_options = ["Unweighted"] + numeric_columns
-        weight_column = st.selectbox(
-            "Optional weight field",
-            weight_options,
-            help="Weighted summaries are descriptive only; this does not account for CPS replicate weights or survey design.",
-        )
-        detail_data = data
-
-if use_sep23_layout or is_recognized_cps_csv:
-    series = prepare_chart_series(variable, data[variable])
+if is_recognized_cps_csv:
+    series = prepare_chart_series(variable, data[variable], year=release)
 else:
     series = data[variable]
 plot_variable = (
-    variable_label(variable)
-    if use_sep23_layout or is_recognized_cps_csv
+    variable_label(variable, year=release, include_code=include_codes)
+    if is_recognized_cps_csv
     else str(variable)
 )
 is_numeric = pd.api.types.is_numeric_dtype(series)
@@ -459,17 +460,3 @@ else:
             st.pyplot(figure)
             plt.close(figure)
         st.caption("Showing the top 10 categories; remaining values are grouped as Other.")
-
-with st.expander("Field details"):
-    details = pd.DataFrame(
-        {
-            "dtype": detail_data.dtypes.astype(str),
-            "missing": detail_data.isna().sum(),
-            "distinct": detail_data.nunique(dropna=True),
-        }
-    )
-    st.dataframe(details, width="stretch")
-    if use_sep23_layout or is_recognized_cps_csv:
-        st.caption(
-            f"Field details are calculated from the {preview_rows:,}-row preview."
-        )

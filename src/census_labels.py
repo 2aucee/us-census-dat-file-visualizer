@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import json
 from collections.abc import Mapping
+from pathlib import Path
 
 import pandas as pd
 
@@ -10,8 +12,26 @@ import pandas as pd
 VARIABLE_LABELS = {
     "HRMONTH": "Interview month",
     "HRYEAR4": "Interview year",
+    "HURESPLI": "Respondent's household line number",
+    "HUFINAL": "Interview result",
+    "HULANGCODE": "Interview language",
+    "HETENURE": "Housing tenure",
+    "HEHOUSUT": "Type of home",
+    "HETELHHD": "Telephone in the home",
+    "HETELAVL": "Telephone available elsewhere",
+    "HEPHONEO": "Phone interview allowed",
+    "HEFAMINC": "Family income range",
+    "HUTYPEA": "Type A non-interview reason",
+    "HUTYPB": "Type B non-interview reason",
+    "HUTYPC": "Type C non-interview reason",
+    "HWHHWGT": "Household survey weight",
+    "HRINTSTA": "Household interview result",
+    "HRNUMHOU": "People in household",
+    "HRHTYPE": "Household type",
+    "HRMIS": "Survey rotation month",
+    "HUINTTYP": "Interview method",
     "GEREG": "Census region",
-    "GESTFIPS": "State FIPS code",
+    "GESTFIPS": "State",
     "PERRP": "Relationship to household reference person",
     "PRTAGE": "Age",
     "PESEX": "Sex",
@@ -34,7 +54,7 @@ VARIABLE_LABELS = {
     "PES16": "Volunteered for an organization",
     "PES16A": "Did informal or occasional volunteer activities",
     "PES16D": "How often did you volunteer?",
-    "PTS16E": "Volunteer hours in the past year (top-coded at 500)",
+    "PTS16E": "Volunteer hours in the past year",
     "PES16F": "How much volunteering was in person versus online?",
     "PES17": "Donated over $25 to a political organization",
     "PES18": "Donated over $25 to a non-political organization",
@@ -56,6 +76,20 @@ FALLBACK_LABELS = {
 }
 
 RESPONSE_LABELS: dict[str, dict[int, str]] = {
+    "HRMONTH": {
+        1: "January",
+        2: "February",
+        3: "March",
+        4: "April",
+        5: "May",
+        6: "June",
+        7: "July",
+        8: "August",
+        9: "September",
+        10: "October",
+        11: "November",
+        12: "December",
+    },
     "GEREG": {1: "Northeast", 2: "Midwest", 3: "South", 4: "West"},
     "PESEX": {1: "Male", 2: "Female"},
     "PEEDUCA": {
@@ -227,6 +261,59 @@ RESPONSE_LABELS["PES16F"] = {
     4: "More online than in person",
     5: "All online",
 }
+RESPONSE_LABELS["GESTFIPS"] = {
+    1: "Alabama",
+    2: "Alaska",
+    4: "Arizona",
+    5: "Arkansas",
+    6: "California",
+    8: "Colorado",
+    9: "Connecticut",
+    10: "Delaware",
+    11: "District of Columbia",
+    12: "Florida",
+    13: "Georgia",
+    15: "Hawaii",
+    16: "Idaho",
+    17: "Illinois",
+    18: "Indiana",
+    19: "Iowa",
+    20: "Kansas",
+    21: "Kentucky",
+    22: "Louisiana",
+    23: "Maine",
+    24: "Maryland",
+    25: "Massachusetts",
+    26: "Michigan",
+    27: "Minnesota",
+    28: "Mississippi",
+    29: "Missouri",
+    30: "Montana",
+    31: "Nebraska",
+    32: "Nevada",
+    33: "New Hampshire",
+    34: "New Jersey",
+    35: "New Mexico",
+    36: "New York",
+    37: "North Carolina",
+    38: "North Dakota",
+    39: "Ohio",
+    40: "Oklahoma",
+    41: "Oregon",
+    42: "Pennsylvania",
+    44: "Rhode Island",
+    45: "South Carolina",
+    46: "South Dakota",
+    47: "Tennessee",
+    48: "Texas",
+    49: "Utah",
+    50: "Vermont",
+    51: "Virginia",
+    53: "Washington",
+    54: "West Virginia",
+    55: "Wisconsin",
+    56: "Wyoming",
+}
 
 SPECIAL_RESPONSE_LABELS = {
     -9: "No answer",
@@ -236,19 +323,73 @@ SPECIAL_RESPONSE_LABELS = {
 }
 
 
-def variable_label(name: str) -> str:
-    """Return a descriptive field name while keeping its Census code visible."""
+def _load_cps_metadata() -> dict[str, dict[str, dict[str, object]]]:
+    path = Path(__file__).parent / "layouts" / "cps_public_labels.json"
+    try:
+        with path.open(encoding="utf-8") as metadata_file:
+            metadata = json.load(metadata_file)
+    except (OSError, json.JSONDecodeError) as error:
+        raise RuntimeError(f"Could not load bundled Census labels: {error}") from error
+    releases = metadata.get("releases") if isinstance(metadata, dict) else None
+    if not isinstance(releases, dict):
+        raise RuntimeError("The bundled Census labels have an invalid format.")
+    return releases
+
+
+CPS_METADATA = _load_cps_metadata()
+
+
+def _field_metadata(name: str, year: str | None = None) -> dict[str, object]:
+    years = [year, *[item for item in ("2023", "2021", "2019") if item != year]]
+    merged: dict[str, object] = {}
+    for release in reversed([item for item in years if item]):
+        fields = CPS_METADATA.get(release, {})
+        field = fields.get(name, {})
+        if isinstance(field, dict):
+            merged.update(field)
+    return merged
+
+
+def _response_labels(name: str, year: str | None = None) -> dict[int, str]:
+    if year is None:
+        metadata = _field_metadata(name)
+    else:
+        metadata = CPS_METADATA.get(year, {}).get(name, {})
+    raw_labels = metadata.get("responses", {})
+    labels = {
+        int(code): str(label)
+        for code, label in raw_labels.items()
+    } if isinstance(raw_labels, dict) else {}
+    labels.update(RESPONSE_LABELS.get(name, {}))
+    return labels
+
+
+def variable_label(
+    name: str, *, year: str | None = None, include_code: bool = False
+) -> str:
+    """Return a readable field name, optionally including its Census code."""
     description = VARIABLE_LABELS.get(name) or FALLBACK_LABELS.get(name)
     if description is None:
-        return name.replace("_", " ").title()
-    return f"{description} ({name})"
+        metadata_label = _field_metadata(name, year).get("label")
+        if isinstance(metadata_label, str) and metadata_label:
+            description = metadata_label
+    if description is None:
+        description = "Unlabeled Census field"
+    return f"{description} ({name})" if include_code else description
 
 
 def label_responses(
-    name: str, values: pd.Series, *, documented: bool = True
+    name: str,
+    values: pd.Series,
+    *,
+    documented: bool = True,
+    year: str | None = None,
+    include_code: bool = False,
 ) -> pd.Series:
     """Translate documented categories and common CPS special codes."""
-    labels: Mapping[int, str] | None = RESPONSE_LABELS.get(name) if documented else None
+    labels: Mapping[int, str] | None = (
+        _response_labels(name, year) if documented else None
+    )
 
     def label(value: object) -> object:
         if pd.isna(value):
@@ -262,24 +403,34 @@ def label_responses(
         if code == -1:
             return "N/A"
         if labels is not None and code in labels:
-            return f"{labels[code]} ({code})"
+            return f"{labels[code]} ({code})" if include_code else labels[code]
         if code in SPECIAL_RESPONSE_LABELS:
-            return f"{SPECIAL_RESPONSE_LABELS[code]} ({code})"
-        if labels is not None and code < 0:
-            return f"Other nonresponse ({code})"
-        if labels is not None:
-            return f"Other response ({code})"
+            return (
+                f"{SPECIAL_RESPONSE_LABELS[code]} ({code})"
+                if include_code
+                else SPECIAL_RESPONSE_LABELS[code]
+            )
+        if labels:
+            return (
+                f"Code not listed in Census documentation ({code})"
+                if include_code
+                else "Code not listed in Census documentation"
+            )
         return value
 
     return values.map(label).astype("string")
 
 
 def prepare_chart_series(
-    name: str, values: pd.Series, *, documented: bool = True
+    name: str,
+    values: pd.Series,
+    *,
+    documented: bool = True,
+    year: str | None = None,
 ) -> pd.Series:
     """Keep numeric fields numeric while translating documented categories."""
-    if documented and name in RESPONSE_LABELS:
-        return label_responses(name, values)
+    if documented and _response_labels(name, year):
+        return label_responses(name, values, year=year)
     if pd.api.types.is_numeric_dtype(values):
         return pd.to_numeric(values, errors="coerce").mask(
             values.isin(SPECIAL_RESPONSE_LABELS)

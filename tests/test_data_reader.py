@@ -45,6 +45,15 @@ def test_read_delimited_stream_selects_columns_and_limits_preview():
     assert preview.to_dict("list") == {"age": [20, 30], "weight": [100, 200]}
 
 
+def test_read_delimited_pages_through_rows_after_the_header():
+    page = read_delimited(
+        "age,group\n20,A\n30,B\n40,C\n50,D\n",
+        nrows=2,
+        row_offset=2,
+    )
+    assert page.to_dict("list") == {"age": [40, 50], "group": ["C", "D"]}
+
+
 def test_read_delimited_detects_separator_when_rows_exceed_sample_buffer():
     headers = [f"field_{index}" for index in range(422)]
     row = ["x" * 24 for _ in headers]
@@ -68,48 +77,77 @@ def test_read_sep23pub_csv_keeps_identifier_codes_as_text():
 
 
 def test_census_variables_and_documented_categories_are_readable():
-    assert variable_label("PES16D") == "How often did you volunteer? (PES16D)"
+    assert variable_label("PES16D") == "How often did you volunteer?"
     assert label_responses("PRSUPVOL", pd.Series([-1, 1, 2])).tolist() == [
         "N/A",
-        "Volunteer (1)",
-        "Not a volunteer (2)",
+        "Volunteer",
+        "Not a volunteer",
     ]
     assert label_responses("PEEDUCA", pd.Series([39, 43])).tolist() == [
-        "High school diploma or equivalent (39)",
-        "Bachelor's degree (43)",
+        "High school diploma or equivalent",
+        "Bachelor's degree",
     ]
     assert str(label_responses("PRSUPVOL", pd.Series([-1, 1, 2])).dtype) == "string"
 
 
 def test_cps_demographic_and_supplement_codes_have_readable_labels():
     assert label_responses("GEREG", pd.Series([1, 4])).tolist() == [
-        "Northeast (1)",
-        "West (4)",
+        "Northeast",
+        "West",
     ]
     assert label_responses("PESEX", pd.Series([1, 2])).tolist() == [
-        "Male (1)",
-        "Female (2)",
+        "Male",
+        "Female",
     ]
     assert label_responses("PRMARSTA", pd.Series([1, 7])).tolist() == [
-        "Married, civilian spouse present (1)",
-        "Never married (7)",
+        "Married, civilian spouse present",
+        "Never married",
     ]
     assert label_responses("PES11", pd.Series([-1, -2, -3, -9, 3])).tolist() == [
         "N/A",
-        "Don't know (-2)",
-        "Refused (-3)",
-        "No answer (-9)",
-        "Not eligible to vote (3)",
+        "Don't know",
+        "Refused",
+        "No answer",
+        "Not eligible to vote",
     ]
+
+
+def test_official_cps_metadata_labels_additional_fields_and_codes():
+    assert variable_label("UNKNOWN", year="2023") == (
+        "Unlabeled Census field"
+    )
+    assert variable_label("HETENURE", year="2023") == (
+        "Housing tenure"
+    )
+    assert label_responses(
+        "HETENURE", pd.Series([1, 3, -1, 9]), year="2023"
+    ).tolist() == [
+        "Owned or being bought by a hh member",
+        "Occupied without payment of cash rent",
+        "N/A",
+        "Code not listed in Census documentation",
+    ]
+    assert label_responses(
+        "GESTFIPS", pd.Series(["06", "11"]), year="2023"
+    ).tolist() == ["California", "District of Columbia"]
+    assert label_responses(
+        "HETENURE", pd.Series([1]), year="2023", include_code=True
+    ).tolist() == ["Owned or being bought by a hh member (1)"]
+    assert variable_label("HETENURE", year="2023", include_code=True) == (
+        "Housing tenure (HETENURE)"
+    )
+    assert prepare_chart_series(
+        "PRTAGE", pd.Series([25, 80]), year="2023"
+    ).tolist() == [25, 80]
 
 
 def test_common_cps_special_codes_are_labeled_for_other_fields():
     assert label_responses(
         "PES99", pd.Series([-9, -3, -2, -1, 1])
     ).tolist() == [
-        "No answer (-9)",
-        "Refused (-3)",
-        "Don't know (-2)",
+        "No answer",
+        "Refused",
+        "Don't know",
         "N/A",
         "1",
     ]
@@ -118,7 +156,7 @@ def test_common_cps_special_codes_are_labeled_for_other_fields():
 def test_not_in_universe_is_n_a_for_documented_and_undocumented_fields():
     assert label_responses("PES11", pd.Series([-1, 1])).tolist() == [
         "N/A",
-        "Yes (1)",
+        "Yes",
     ]
     assert label_responses(
         "PES16D", pd.Series([-1, 5]), documented=False
@@ -137,8 +175,8 @@ def test_chart_series_labels_documented_categorical_fields():
         "PRSUPVOL", pd.Series([-1, 1, 2])
     ).tolist() == [
         "N/A",
-        "Volunteer (1)",
-        "Not a volunteer (2)",
+        "Volunteer",
+        "Not a volunteer",
     ]
 
 
