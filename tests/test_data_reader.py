@@ -46,13 +46,25 @@ def test_read_sep23pub_csv_keeps_identifier_codes_as_text():
 def test_census_variables_and_documented_categories_are_readable():
     assert variable_label("PES16D") == "How often did you volunteer? (PES16D)"
     assert label_responses("PRSUPVOL", pd.Series([-1, 1, 2])).tolist() == [
-        "Not in universe",
-        "Volunteer",
-        "Not a volunteer",
+        "Not in universe (-1)",
+        "Volunteer (1)",
+        "Not a volunteer (2)",
     ]
     assert label_responses("PEEDUCA", pd.Series([39, 43])).tolist() == [
-        "High school diploma or equivalent",
-        "Bachelor's degree",
+        "High school diploma or equivalent (39)",
+        "Bachelor's degree (43)",
+    ]
+
+
+def test_common_cps_special_codes_are_labeled_for_other_fields():
+    assert label_responses(
+        "PES99", pd.Series([-9, -3, -2, -1, 1])
+    ).tolist() == [
+        "No answer (-9)",
+        "Refused (-3)",
+        "Don't know (-2)",
+        "Not in universe (-1)",
+        1,
     ]
 
 

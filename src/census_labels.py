@@ -228,6 +228,13 @@ RESPONSE_LABELS["PES16F"] = {
     5: "All online",
 }
 
+SPECIAL_RESPONSE_LABELS = {
+    -9: "No answer",
+    -3: "Refused",
+    -2: "Don't know",
+    -1: "Not in universe",
+}
+
 
 def variable_label(name: str) -> str:
     """Return a descriptive field name while keeping its Census code visible."""
@@ -238,22 +245,26 @@ def variable_label(name: str) -> str:
 
 
 def label_responses(name: str, values: pd.Series) -> pd.Series:
-    """Replace documented numeric category codes with their response labels."""
+    """Translate documented categories and common CPS special codes."""
     labels: Mapping[int, str] | None = RESPONSE_LABELS.get(name)
-    if labels is None:
-        return values
 
     def label(value: object) -> object:
         if pd.isna(value):
             return "Missing"
         try:
             code = int(value)
+            if float(value) != code:
+                return value
         except (TypeError, ValueError):
             return value
-        if code in labels:
-            return labels[code]
-        if code < 0:
+        if labels is not None and code in labels:
+            return f"{labels[code]} ({code})"
+        if code in SPECIAL_RESPONSE_LABELS:
+            return f"{SPECIAL_RESPONSE_LABELS[code]} ({code})"
+        if labels is not None and code < 0:
             return f"Other nonresponse ({code})"
-        return f"Other response ({code})"
+        if labels is not None:
+            return f"Other response ({code})"
+        return value
 
     return values.map(label)

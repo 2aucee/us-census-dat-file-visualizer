@@ -141,6 +141,11 @@ if use_sep23_layout:
         )
     st.dataframe(readable_preview, width="stretch")
     st.caption("Preview is limited to the first 100 records.")
+    st.caption(
+        "CPS special values are spelled out where they occur (for example, "
+        "Not in universe (-1), Don't know (-2), Refused (-3), and No answer (-9)). "
+        "The original code stays in parentheses."
+    )
     st.subheader("Explore a variable")
     show_all_fields = st.checkbox(
         "Show all fields, including Census codes without built-in descriptions"
