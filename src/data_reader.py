@@ -166,17 +166,28 @@ def parse_fixed_width_layout(layout_text: str) -> tuple[list[str], list[tuple[in
 
 
 def read_delimited(
-    text: str,
+    text: str | TextIO,
     *,
     delimiter: str | None = None,
     has_header: bool = True,
+    columns: Sequence[str] | None = None,
+    nrows: int | None = None,
 ) -> pd.DataFrame:
-    """Read delimited records, with optional delimiter detection."""
-    if not text.strip():
+    """Read delimited records, optionally selecting columns and limiting rows."""
+    stream = io.StringIO(text) if isinstance(text, str) else text
+    position = stream.tell()
+    sample_lines = []
+    for _ in range(20):
+        line = stream.readline()
+        if not line:
+            break
+        if line.strip():
+            sample_lines.append(line.rstrip("\r\n"))
+    stream.seek(position)
+    if not sample_lines:
         raise ValueError("The uploaded file is empty.")
     separator = delimiter
     if separator is None:
-        sample_lines = [line for line in text.splitlines() if line.strip()][:20]
         for candidate in (",", "\t", "|", ";"):
             parsed_rows = list(csv.reader(sample_lines, delimiter=candidate))
             field_counts = [len(row) for row in parsed_rows]
@@ -187,10 +198,12 @@ def read_delimited(
             separator = r"\s+"
     try:
         return pd.read_csv(
-            io.StringIO(text),
+            stream,
             sep=separator,
-            engine="python",
+            engine="python" if separator == r"\s+" else "c",
             header=0 if has_header else None,
+            usecols=list(columns) if columns is not None else None,
+            nrows=nrows,
         )
     except (pd.errors.ParserError, UnicodeError) as error:
         raise ValueError(f"Could not parse the delimited file: {error}") from error

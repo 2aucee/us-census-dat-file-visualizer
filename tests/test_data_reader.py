@@ -1,3 +1,5 @@
+import io
+
 import pytest
 import pandas as pd
 
@@ -29,6 +31,24 @@ def test_read_delimited_without_header():
     assert frame.iloc[0].tolist() == [30, "A"]
 
 
+def test_read_delimited_stream_selects_columns_and_limits_preview():
+    stream = io.StringIO(
+        "age,region,weight\n20,West,100\n30,East,200\n40,South,300\n"
+    )
+    preview = read_delimited(
+        stream, delimiter=",", columns=["age", "weight"], nrows=2
+    )
+    assert preview.to_dict("list") == {"age": [20, 30], "weight": [100, 200]}
+
+
+def test_read_delimited_detects_separator_when_rows_exceed_sample_buffer():
+    headers = [f"field_{index}" for index in range(422)]
+    row = ["x" * 24 for _ in headers]
+    text = ",".join(headers) + "\n" + ",".join(row) + "\n"
+    frame = read_delimited(text, nrows=1)
+    assert frame.shape == (1, 422)
+
+
 def test_read_sep23pub_csv_selected_columns_and_row_limit():
     text = "HRHHID,PRSUPVOL,PWNRWGT\n00012,1,125.5\n00013,2,80.0\n"
     frame = read_sep23pub_csv(
@@ -46,7 +66,7 @@ def test_read_sep23pub_csv_keeps_identifier_codes_as_text():
 def test_census_variables_and_documented_categories_are_readable():
     assert variable_label("PES16D") == "How often did you volunteer? (PES16D)"
     assert label_responses("PRSUPVOL", pd.Series([-1, 1, 2])).tolist() == [
-        "Not in universe (-1)",
+        "N/A",
         "Volunteer (1)",
         "Not a volunteer (2)",
     ]
@@ -63,9 +83,19 @@ def test_common_cps_special_codes_are_labeled_for_other_fields():
         "No answer (-9)",
         "Refused (-3)",
         "Don't know (-2)",
-        "Not in universe (-1)",
+        "N/A",
         1,
     ]
+
+
+def test_not_in_universe_is_n_a_for_documented_and_undocumented_fields():
+    assert label_responses("PES11", pd.Series([-1, 1])).tolist() == [
+        "N/A",
+        "Yes (1)",
+    ]
+    assert label_responses(
+        "PES16D", pd.Series([-1, 5]), documented=False
+    ).tolist() == ["N/A", 5]
 
 
 def test_parse_fixed_width_layout_and_read():

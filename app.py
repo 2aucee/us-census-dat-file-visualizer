@@ -9,7 +9,6 @@ import seaborn as sns
 import streamlit as st
 
 from src.data_reader import (
-    decode_text,
     load_sep23pub_layout,
     parse_fixed_width_layout,
     read_delimited,
@@ -43,6 +42,8 @@ if uploaded_file is None:
 try:
     is_sep23pub = Path(uploaded_file.name).name.casefold() == "sep23pub.dat"
     is_sep23pub_csv = Path(uploaded_file.name).name.casefold() == "sep23pub.csv"
+    is_sep21pub_csv = Path(uploaded_file.name).name.casefold() == "sep21pub.csv"
+    is_streamed_delimited = False
     if is_sep23pub or is_sep23pub_csv:
         field_names, _ = load_sep23pub_layout()
         preview_fields = [
@@ -93,7 +94,6 @@ try:
         )
 
         if format_choice == "Delimited / whitespace":
-            text = decode_text(uploaded_file.getvalue())
             delimiter_choice = st.selectbox(
                 "Field separator",
                 ["Detect automatically", "Comma", "Tab", "Pipe", "Whitespace"],
@@ -106,7 +106,20 @@ try:
                 "Whitespace": r"\s+",
             }[delimiter_choice]
             has_header = st.checkbox("First row contains column names", value=True)
-            data = read_delimited(text, delimiter=delimiter, has_header=has_header)
+            uploaded_file.seek(0)
+            file_text = io.TextIOWrapper(uploaded_file, encoding="utf-8-sig")
+            try:
+                preview = read_delimited(
+                    file_text,
+                    delimiter=delimiter,
+                    has_header=has_header,
+                    nrows=100,
+                )
+            finally:
+                file_text.detach()
+            field_names = list(preview.columns)
+            data = preview
+            is_streamed_delimited = True
             use_sep23_layout = False
         else:
             st.caption(
@@ -215,27 +228,103 @@ else:
         st.stop()
 
     st.subheader("Data overview")
-    metric_columns = st.columns(3)
-    metric_columns[0].metric("Records", f"{len(data):,}")
-    metric_columns[1].metric("Fields", f"{len(data.columns):,}")
-    metric_columns[2].metric("Missing cells", f"{int(data.isna().sum().sum()):,}")
-    st.dataframe(data.head(100), width="stretch")
-    st.caption("Preview is limited to the first 100 rows.")
+    if is_streamed_delimited:
+        if is_sep21pub_csv:
+            st.info(
+                "Recognized the September 2021 CPS CSV. The app previews 100 rows "
+                "and reads only the selected variable and optional weight."
+            )
+            readable_preview = preview.rename(columns=variable_label)
+            for column in preview.columns:
+                readable_preview[variable_label(str(column))] = label_responses(
+                    str(column), preview[column], documented=False
+                )
+            st.dataframe(readable_preview, width="stretch")
+            st.caption(
+                "Not-in-universe values are shown as N/A. Other documented CPS "
+                "special codes keep their code with a plain-English description."
+            )
+        else:
+            st.dataframe(preview, width="stretch")
+        st.caption("Preview is limited to the first 100 rows.")
 
-    st.subheader("Explore a variable")
-    numeric_columns = data.select_dtypes(include="number").columns.tolist()
-    all_columns = data.columns.tolist()
-    variable = st.selectbox("Variable to visualize", all_columns)
-    weight_options = ["Unweighted"] + numeric_columns
-    weight_column = st.selectbox(
-        "Optional weight field",
-        weight_options,
-        help="Weighted summaries are descriptive only; this does not account for CPS replicate weights or survey design.",
-    )
-    detail_data = data
+        st.subheader("Explore a variable")
+        numeric_columns = preview.select_dtypes(include="number").columns.tolist()
+        variable = st.selectbox(
+            "Variable to visualize",
+            field_names,
+            format_func=lambda name: (
+                variable_label(str(name))
+                if is_sep21pub_csv
+                else str(name)
+            ),
+        )
+        weight_options = ["Unweighted"] + numeric_columns
+        weight_column = st.selectbox(
+            "Optional weight field",
+            weight_options,
+            format_func=lambda name: (
+                "Unweighted"
+                if name == "Unweighted"
+                else variable_label(str(name))
+                if is_sep21pub_csv
+                else str(name)
+            ),
+            help="Weighted summaries are descriptive only; this does not account for CPS replicate weights or survey design.",
+        )
+        columns_to_read = [variable]
+        if weight_column != "Unweighted" and weight_column != variable:
+            columns_to_read.append(weight_column)
+        uploaded_file.seek(0)
+        file_text = io.TextIOWrapper(uploaded_file, encoding="utf-8-sig")
+        try:
+            data = read_delimited(
+                file_text,
+                delimiter=delimiter,
+                has_header=has_header,
+                columns=columns_to_read,
+            )
+        finally:
+            file_text.detach()
+        if data.empty:
+            st.warning("No records were found for this selection.")
+            st.stop()
 
-series = label_responses(variable, data[variable]) if use_sep23_layout else data[variable]
-plot_variable = variable_label(variable) if use_sep23_layout else str(variable)
+        metric_columns = st.columns(3)
+        metric_columns[0].metric("Records", f"{len(data):,}")
+        metric_columns[1].metric("Fields", f"{len(preview.columns):,}")
+        metric_columns[2].metric(
+            "Missing cells in preview",
+            f"{int(preview.isna().sum().sum()):,}",
+        )
+        detail_data = preview
+    else:
+        metric_columns = st.columns(3)
+        metric_columns[0].metric("Records", f"{len(data):,}")
+        metric_columns[1].metric("Fields", f"{len(data.columns):,}")
+        metric_columns[2].metric("Missing cells", f"{int(data.isna().sum().sum()):,}")
+        st.dataframe(data.head(100), width="stretch")
+        st.caption("Preview is limited to the first 100 rows.")
+
+        st.subheader("Explore a variable")
+        numeric_columns = data.select_dtypes(include="number").columns.tolist()
+        all_columns = data.columns.tolist()
+        variable = st.selectbox("Variable to visualize", all_columns)
+        weight_options = ["Unweighted"] + numeric_columns
+        weight_column = st.selectbox(
+            "Optional weight field",
+            weight_options,
+            help="Weighted summaries are descriptive only; this does not account for CPS replicate weights or survey design.",
+        )
+        detail_data = data
+
+if use_sep23_layout:
+    series = label_responses(variable, data[variable])
+elif is_sep21pub_csv:
+    series = label_responses(variable, data[variable], documented=False)
+else:
+    series = data[variable]
+plot_variable = variable_label(variable) if use_sep23_layout or is_sep21pub_csv else str(variable)
 is_numeric = pd.api.types.is_numeric_dtype(series)
 if is_numeric:
     chart_type = st.radio("Chart", ["Distribution", "Summary statistics"], horizontal=True)
@@ -305,5 +394,5 @@ with st.expander("Field details"):
         }
     )
     st.dataframe(details, width="stretch")
-    if use_sep23_layout:
+    if use_sep23_layout or is_sep21pub_csv:
         st.caption("Field details are calculated from the 100-row preview.")

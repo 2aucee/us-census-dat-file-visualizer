@@ -244,9 +244,11 @@ def variable_label(name: str) -> str:
     return f"{description} ({name})"
 
 
-def label_responses(name: str, values: pd.Series) -> pd.Series:
+def label_responses(
+    name: str, values: pd.Series, *, documented: bool = True
+) -> pd.Series:
     """Translate documented categories and common CPS special codes."""
-    labels: Mapping[int, str] | None = RESPONSE_LABELS.get(name)
+    labels: Mapping[int, str] | None = RESPONSE_LABELS.get(name) if documented else None
 
     def label(value: object) -> object:
         if pd.isna(value):
@@ -257,6 +259,8 @@ def label_responses(name: str, values: pd.Series) -> pd.Series:
                 return value
         except (TypeError, ValueError):
             return value
+        if code == -1:
+            return "N/A"
         if labels is not None and code in labels:
             return f"{labels[code]} ({code})"
         if code in SPECIAL_RESPONSE_LABELS:
