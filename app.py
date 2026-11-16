@@ -10,11 +10,8 @@ import streamlit as st
 
 from src.data_reader import (
     load_sep23pub_layout,
-    parse_fixed_width_layout,
     read_delimited,
-    read_fixed_width,
     read_sep23pub_csv,
-    read_sep23pub_file,
 )
 from src.census_labels import (
     VARIABLE_LABELS,
@@ -28,14 +25,14 @@ sns.set_theme(style="whitegrid", context="notebook", palette="crest")
 
 st.title("Census Data Explorer")
 st.markdown(
-    "Explore a Census text file in this app. Uploads are processed in memory and are "
-    "not saved by the app. A hosted copy sends the file to its hosting provider; run "
-    "the app locally if you do not want to upload data to a hosting service."
+    "Upload a CSV file to view its table and explore columns. Uploads are processed "
+    "in memory and aren't saved by the app. If you use the hosted site, the file "
+    "is sent to its hosting provider."
 )
 
 uploaded_file = st.file_uploader(
-    "Choose a Census .dat, .txt, or delimited file",
-    type=["dat", "txt", "csv", "tsv"],
+    "Choose a CSV file",
+    type=["csv"],
 )
 
 preview_rows = st.selectbox(
@@ -53,15 +50,13 @@ if uploaded_file is None:
     st.stop()
 
 try:
-    is_sep23pub = Path(uploaded_file.name).name.casefold() == "sep23pub.dat"
     is_sep23pub_csv = Path(uploaded_file.name).name.casefold() == "sep23pub.csv"
     is_sep19pub_csv = Path(uploaded_file.name).name.casefold() == "sep19pub.csv"
     is_sep21pub_csv = Path(uploaded_file.name).name.casefold() == "sep21pub.csv"
     is_recognized_cps_csv = (
         is_sep19pub_csv or is_sep21pub_csv or is_sep23pub_csv
     )
-    is_streamed_delimited = False
-    if is_sep23pub or is_sep23pub_csv:
+    if is_sep23pub_csv:
         field_names, _ = load_sep23pub_layout()
         preview_fields = [
             name
@@ -82,78 +77,26 @@ try:
             )
             if name in field_names
         ]
-        if is_sep23pub_csv:
-            st.info(
-                "Recognized the September 2023 CPS CSV. The app reads a short preview "
-                "first, then only the selected variable and optional weight."
-            )
-            uploaded_file.seek(0)
-            preview = read_sep23pub_csv(
-                uploaded_file, columns=preview_fields, nrows=preview_rows
-            )
-        else:
-            st.info("Using the official Census layout for sep23pub.dat.")
-            uploaded_file.seek(0)
-            file_text = io.TextIOWrapper(uploaded_file, encoding="utf-8-sig")
-            try:
-                preview = read_sep23pub_file(
-                    file_text, columns=preview_fields, nrows=preview_rows
-                )
-            finally:
-                file_text.detach()
+        st.info(
+            "Recognized the September 2023 CPS CSV. The app reads a short preview "
+            "first, then only the selected variable and optional weight."
+        )
+        uploaded_file.seek(0)
+        preview = read_sep23pub_csv(
+            uploaded_file, columns=preview_fields, nrows=preview_rows
+        )
         use_sep23_layout = True
     else:
-        format_choice = st.radio(
-            "How is the file organized?",
-            ["Delimited / whitespace", "Fixed-width records"],
-            index=1 if uploaded_file.name.casefold().endswith(".dat") else 0,
-            horizontal=True,
-        )
-
-        if format_choice == "Delimited / whitespace":
-            delimiter_choice = st.selectbox(
-                "Field separator",
-                ["Detect automatically", "Comma", "Tab", "Pipe", "Whitespace"],
-            )
-            delimiter = {
-                "Detect automatically": None,
-                "Comma": ",",
-                "Tab": "\t",
-                "Pipe": "|",
-                "Whitespace": r"\s+",
-            }[delimiter_choice]
-            has_header = st.checkbox("First row contains column names", value=True)
-            uploaded_file.seek(0)
-            file_text = io.TextIOWrapper(uploaded_file, encoding="utf-8-sig")
-            try:
-                preview = read_delimited(
-                    file_text,
-                    delimiter=delimiter,
-                    has_header=has_header,
-                    nrows=preview_rows,
-                )
-            finally:
-                file_text.detach()
-            field_names = list(preview.columns)
-            data = preview
-            is_streamed_delimited = True
-            use_sep23_layout = False
-        else:
-            st.caption(
-                "Use the Census documentation for this exact file and supplement. "
-                "Positions below are one-based and inclusive."
-            )
-            layout_text = st.text_area(
-                "Paste the record layout as CSV",
-                value="name,start,end\n",
-                height=110,
-                help="Include a header row and one row per field. Example: AGE,1,2",
-            )
-            field_names, field_colspecs = parse_fixed_width_layout(layout_text)
-            use_sep23_layout = False
-            uploaded_file.seek(0)
-            with io.TextIOWrapper(uploaded_file, encoding="utf-8-sig") as file_text:
-                data = read_fixed_width(file_text, names=field_names, colspecs=field_colspecs)
+        uploaded_file.seek(0)
+        file_text = io.TextIOWrapper(uploaded_file, encoding="utf-8-sig")
+        try:
+            preview = read_delimited(file_text, nrows=preview_rows)
+        finally:
+            file_text.detach()
+        field_names = list(preview.columns)
+        data = preview
+        is_streamed_delimited = True
+        use_sep23_layout = False
 except (UnicodeDecodeError, ValueError, pd.errors.ParserError) as error:
     st.error(str(error))
     st.stop()
@@ -216,14 +159,7 @@ if use_sep23_layout:
         columns_to_read.append(weight_column)
     try:
         uploaded_file.seek(0)
-        if is_sep23pub_csv:
-            data = read_sep23pub_csv(uploaded_file, columns=columns_to_read)
-        else:
-            file_text = io.TextIOWrapper(uploaded_file, encoding="utf-8-sig")
-            try:
-                data = read_sep23pub_file(file_text, columns=columns_to_read)
-            finally:
-                file_text.detach()
+        data = read_sep23pub_csv(uploaded_file, columns=columns_to_read)
     except (UnicodeDecodeError, ValueError, pd.errors.ParserError) as error:
         st.error(str(error))
         st.stop()
@@ -304,8 +240,6 @@ else:
         try:
             data = read_delimited(
                 file_text,
-                delimiter=delimiter,
-                has_header=has_header,
                 columns=columns_to_read,
             )
         finally:
