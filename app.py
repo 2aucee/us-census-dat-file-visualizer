@@ -139,7 +139,7 @@ if use_sep23_layout:
         readable_preview[variable_label(column)] = label_responses(
             column, preview[column]
         )
-    st.dataframe(readable_preview, use_container_width=True)
+    st.dataframe(readable_preview, width="stretch")
     st.caption("Preview is limited to the first 100 records.")
     st.subheader("Explore a variable")
     show_all_fields = st.checkbox(
@@ -214,7 +214,7 @@ else:
     metric_columns[0].metric("Records", f"{len(data):,}")
     metric_columns[1].metric("Fields", f"{len(data.columns):,}")
     metric_columns[2].metric("Missing cells", f"{int(data.isna().sum().sum()):,}")
-    st.dataframe(data.head(100), use_container_width=True)
+    st.dataframe(data.head(100), width="stretch")
     st.caption("Preview is limited to the first 100 rows.")
 
     st.subheader("Explore a variable")
@@ -267,7 +267,7 @@ if is_numeric:
                 summary.loc["weighted mean", "value"] = (
                     (valid["value"] * valid["weight"]).sum() / valid["weight"].sum()
                 )
-        st.dataframe(summary, use_container_width=True)
+        st.dataframe(summary, width="stretch")
 else:
     chart_data = pd.DataFrame({"value": series.astype("string")})
     if weight_column != "Unweighted":
@@ -299,6 +299,6 @@ with st.expander("Field details"):
             "distinct": detail_data.nunique(dropna=True),
         }
     )
-    st.dataframe(details, use_container_width=True)
+    st.dataframe(details, width="stretch")
     if use_sep23_layout:
         st.caption("Field details are calculated from the 100-row preview.")
