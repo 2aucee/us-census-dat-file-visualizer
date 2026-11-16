@@ -36,7 +36,7 @@ VARIABLE_LABELS = {
     "PRTAGE": "Age",
     "PESEX": "Sex",
     "PEEDUCA": "Highest education level",
-    "PRMARSTA": "Marital status",
+    "PRMARSTA": "Marital status, including military spouse status",
     "PES1": "How often did you spend time with friends and family?",
     "PES2": "How often did you discuss issues with friends and family?",
     "PES4": "How often did you spend time with neighbors?",
@@ -376,6 +376,24 @@ def variable_label(
     if description is None:
         description = "Unlabeled Census field"
     return f"{description} ({name})" if include_code else description
+
+
+def unique_variable_labels(
+    names: list[str], *, year: str | None = None, include_code: bool = False
+) -> dict[str, str]:
+    """Make display labels unique without showing codes unless needed."""
+    labels = {
+        name: variable_label(name, year=year, include_code=include_code)
+        for name in names
+    }
+    counts: dict[str, int] = {}
+    for label in labels.values():
+        key = label.casefold()
+        counts[key] = counts.get(key, 0) + 1
+    return {
+        name: f"{label} — {name}" if counts[label.casefold()] > 1 else label
+        for name, label in labels.items()
+    }
 
 
 def label_responses(

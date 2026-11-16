@@ -12,6 +12,7 @@ from src.data_reader import read_delimited
 from src.census_labels import (
     label_responses,
     prepare_chart_series,
+    unique_variable_labels,
     variable_label,
 )
 
@@ -236,21 +237,23 @@ metric_columns[2].metric(
 )
 st.subheader("Data table")
 if is_recognized_cps_csv:
-    readable_table = table_page.copy()
-    column_labels = {
-        column: variable_label(
-            str(column), year=release, include_code=include_codes
-        )
-        for column in table_page.columns
-    }
-    readable_table.columns = list(column_labels.values())
-    for column in table_page.columns:
-        readable_table[column_labels[column]] = label_responses(
-            str(column),
-            table_page[column],
-            year=release,
-            include_code=include_codes,
-        )
+    column_labels = unique_variable_labels(
+        [str(column) for column in table_page.columns],
+        year=release,
+        include_code=include_codes,
+    )
+    readable_table = pd.DataFrame(
+        {
+            column_labels[str(column)]: label_responses(
+                str(column),
+                table_page[column],
+                year=release,
+                include_code=include_codes,
+            )
+            for column in table_page.columns
+        },
+        index=table_page.index,
+    )
     st.dataframe(
         readable_table,
         width="stretch",

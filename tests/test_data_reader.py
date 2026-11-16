@@ -15,6 +15,7 @@ from src.data_reader import (
 from src.census_labels import (
     label_responses,
     prepare_chart_series,
+    unique_variable_labels,
     variable_label,
 )
 
@@ -136,6 +137,16 @@ def test_official_cps_metadata_labels_additional_fields_and_codes():
     assert variable_label("HETENURE", year="2023", include_code=True) == (
         "Housing tenure (HETENURE)"
     )
+    labels = unique_variable_labels(
+        ["PEMARITL", "PRMARSTA", "HUBUSL2", "HUBUSL3"],
+        year="2019",
+    )
+    assert labels["PEMARITL"] == "Marital status"
+    assert labels["PRMARSTA"] == (
+        "Marital status, including military spouse status"
+    )
+    assert labels["HUBUSL2"] != labels["HUBUSL3"]
+    assert all(" — " in labels[name] for name in ("HUBUSL2", "HUBUSL3"))
     assert prepare_chart_series(
         "PRTAGE", pd.Series([25, 80]), year="2023"
     ).tolist() == [25, 80]
