@@ -1,0 +1,2125 @@
+{
+  "source": "https://www2.census.gov/programs-surveys/cps/techdocs/cpssep23.pdf",
+  "fields": [
+    {
+      "name": "HRHHID",
+      "start": 1,
+      "end": 15
+    },
+    {
+      "name": "HRMONTH",
+      "start": 16,
+      "end": 17
+    },
+    {
+      "name": "HRYEAR4",
+      "start": 18,
+      "end": 21
+    },
+    {
+      "name": "HURESPLI",
+      "start": 22,
+      "end": 23
+    },
+    {
+      "name": "HUFINAL",
+      "start": 24,
+      "end": 26
+    },
+    {
+      "name": "FILLER",
+      "start": 27,
+      "end": 28
+    },
+    {
+      "name": "HETENURE",
+      "start": 29,
+      "end": 30
+    },
+    {
+      "name": "HEHOUSUT",
+      "start": 31,
+      "end": 32
+    },
+    {
+      "name": "HETELHHD",
+      "start": 33,
+      "end": 34
+    },
+    {
+      "name": "HETELAVL",
+      "start": 35,
+      "end": 36
+    },
+    {
+      "name": "HEPHONEO",
+      "start": 37,
+      "end": 38
+    },
+    {
+      "name": "HEFAMINC",
+      "start": 39,
+      "end": 40
+    },
+    {
+      "name": "HUTYPEA",
+      "start": 41,
+      "end": 42
+    },
+    {
+      "name": "HUTYPB",
+      "start": 43,
+      "end": 44
+    },
+    {
+      "name": "HUTYPC",
+      "start": 45,
+      "end": 46
+    },
+    {
+      "name": "HWHHWGT",
+      "start": 47,
+      "end": 56
+    },
+    {
+      "name": "HRINTSTA",
+      "start": 57,
+      "end": 58
+    },
+    {
+      "name": "HRNUMHOU",
+      "start": 59,
+      "end": 60
+    },
+    {
+      "name": "HRHTYPE",
+      "start": 61,
+      "end": 62
+    },
+    {
+      "name": "HRMIS",
+      "start": 63,
+      "end": 64
+    },
+    {
+      "name": "HUINTTYP",
+      "start": 65,
+      "end": 66
+    },
+    {
+      "name": "HUPRSCNT",
+      "start": 67,
+      "end": 68
+    },
+    {
+      "name": "HRLONGLK",
+      "start": 69,
+      "end": 70
+    },
+    {
+      "name": "HRHHID2",
+      "start": 71,
+      "end": 75
+    },
+    {
+      "name": "HWHHWTLN",
+      "start": 76,
+      "end": 77
+    },
+    {
+      "name": "HUBUS",
+      "start": 79,
+      "end": 80
+    },
+    {
+      "name": "HUBUSL1",
+      "start": 81,
+      "end": 82
+    },
+    {
+      "name": "HUBUSL2",
+      "start": 83,
+      "end": 84
+    },
+    {
+      "name": "HUBUSL3",
+      "start": 85,
+      "end": 86
+    },
+    {
+      "name": "HUBUSL4",
+      "start": 87,
+      "end": 88
+    },
+    {
+      "name": "GEREG",
+      "start": 89,
+      "end": 90
+    },
+    {
+      "name": "GEDIV",
+      "start": 91,
+      "end": 91
+    },
+    {
+      "name": "GESTFIPS",
+      "start": 93,
+      "end": 94
+    },
+    {
+      "name": "GTCBSA",
+      "start": 96,
+      "end": 100
+    },
+    {
+      "name": "GTCO",
+      "start": 101,
+      "end": 103
+    },
+    {
+      "name": "GTCBSAST",
+      "start": 104,
+      "end": 104
+    },
+    {
+      "name": "GTMETSTA",
+      "start": 105,
+      "end": 105
+    },
+    {
+      "name": "GTINDVPC",
+      "start": 106,
+      "end": 106
+    },
+    {
+      "name": "GTCBSASZ",
+      "start": 107,
+      "end": 107
+    },
+    {
+      "name": "GTCSA",
+      "start": 108,
+      "end": 110
+    },
+    {
+      "name": "PERRP",
+      "start": 118,
+      "end": 119
+    },
+    {
+      "name": "PRTAGE",
+      "start": 122,
+      "end": 123
+    },
+    {
+      "name": "PRTFAGE",
+      "start": 124,
+      "end": 124
+    },
+    {
+      "name": "PEMARITL",
+      "start": 125,
+      "end": 126
+    },
+    {
+      "name": "PESPOUSE",
+      "start": 127,
+      "end": 128
+    },
+    {
+      "name": "PESEX",
+      "start": 129,
+      "end": 130
+    },
+    {
+      "name": "PEAFEVER",
+      "start": 131,
+      "end": 132
+    },
+    {
+      "name": "PEAFNOW",
+      "start": 135,
+      "end": 136
+    },
+    {
+      "name": "PEEDUCA",
+      "start": 137,
+      "end": 138
+    },
+    {
+      "name": "PTDTRACE",
+      "start": 139,
+      "end": 140
+    },
+    {
+      "name": "PRDTHSP",
+      "start": 141,
+      "end": 142
+    },
+    {
+      "name": "PUCHINHH",
+      "start": 143,
+      "end": 144
+    },
+    {
+      "name": "PULINENO",
+      "start": 147,
+      "end": 148
+    },
+    {
+      "name": "PRFAMNUM",
+      "start": 151,
+      "end": 152
+    },
+    {
+      "name": "PRFAMREL",
+      "start": 153,
+      "end": 154
+    },
+    {
+      "name": "PRFAMTYP",
+      "start": 155,
+      "end": 156
+    },
+    {
+      "name": "PEHSPNON",
+      "start": 157,
+      "end": 158
+    },
+    {
+      "name": "PRMARSTA",
+      "start": 159,
+      "end": 160
+    },
+    {
+      "name": "PRPERTYP",
+      "start": 161,
+      "end": 162
+    },
+    {
+      "name": "PENATVTY",
+      "start": 163,
+      "end": 165
+    },
+    {
+      "name": "PEMNTVTY",
+      "start": 166,
+      "end": 168
+    },
+    {
+      "name": "PEFNTVTY",
+      "start": 169,
+      "end": 171
+    },
+    {
+      "name": "PRCITSHP",
+      "start": 172,
+      "end": 173
+    },
+    {
+      "name": "PRCITFLG",
+      "start": 174,
+      "end": 175
+    },
+    {
+      "name": "PRINUYER",
+      "start": 176,
+      "end": 177
+    },
+    {
+      "name": "PUSLFPRX",
+      "start": 178,
+      "end": 179
+    },
+    {
+      "name": "PEMLR",
+      "start": 180,
+      "end": 181
+    },
+    {
+      "name": "PUWK",
+      "start": 182,
+      "end": 183
+    },
+    {
+      "name": "PUBUS1",
+      "start": 184,
+      "end": 185
+    },
+    {
+      "name": "PUBUS2OT",
+      "start": 186,
+      "end": 187
+    },
+    {
+      "name": "PUBUSCK1",
+      "start": 188,
+      "end": 189
+    },
+    {
+      "name": "PUBUSCK2",
+      "start": 190,
+      "end": 191
+    },
+    {
+      "name": "PUBUSCK3",
+      "start": 192,
+      "end": 193
+    },
+    {
+      "name": "PUBUSCK4",
+      "start": 194,
+      "end": 195
+    },
+    {
+      "name": "PURETOT",
+      "start": 196,
+      "end": 197
+    },
+    {
+      "name": "PUDIS",
+      "start": 198,
+      "end": 199
+    },
+    {
+      "name": "PERET1",
+      "start": 200,
+      "end": 201
+    },
+    {
+      "name": "PUDIS1",
+      "start": 202,
+      "end": 203
+    },
+    {
+      "name": "PUDIS2",
+      "start": 204,
+      "end": 205
+    },
+    {
+      "name": "PUABSOT",
+      "start": 206,
+      "end": 207
+    },
+    {
+      "name": "PULAY",
+      "start": 208,
+      "end": 209
+    },
+    {
+      "name": "PEABSRSN",
+      "start": 210,
+      "end": 211
+    },
+    {
+      "name": "PEABSPDO",
+      "start": 212,
+      "end": 213
+    },
+    {
+      "name": "PEMJOT",
+      "start": 214,
+      "end": 215
+    },
+    {
+      "name": "PEMJNUM",
+      "start": 216,
+      "end": 217
+    },
+    {
+      "name": "PEHRUSL1",
+      "start": 218,
+      "end": 219
+    },
+    {
+      "name": "PEHRUSL2",
+      "start": 220,
+      "end": 221
+    },
+    {
+      "name": "PEHRFTPT",
+      "start": 222,
+      "end": 223
+    },
+    {
+      "name": "PEHRUSLT",
+      "start": 224,
+      "end": 226
+    },
+    {
+      "name": "PEHRWANT",
+      "start": 227,
+      "end": 228
+    },
+    {
+      "name": "PEHRRSN1",
+      "start": 229,
+      "end": 230
+    },
+    {
+      "name": "PEHRRSN2",
+      "start": 231,
+      "end": 232
+    },
+    {
+      "name": "PEHRRSN3",
+      "start": 233,
+      "end": 234
+    },
+    {
+      "name": "PUHROFF1",
+      "start": 235,
+      "end": 236
+    },
+    {
+      "name": "PUHROFF2",
+      "start": 237,
+      "end": 238
+    },
+    {
+      "name": "PUHROT1",
+      "start": 239,
+      "end": 240
+    },
+    {
+      "name": "PUHROT2",
+      "start": 241,
+      "end": 242
+    },
+    {
+      "name": "PEHRACT1",
+      "start": 243,
+      "end": 244
+    },
+    {
+      "name": "PEHRACT2",
+      "start": 245,
+      "end": 246
+    },
+    {
+      "name": "PEHRACTT",
+      "start": 247,
+      "end": 249
+    },
+    {
+      "name": "PEHRAVL",
+      "start": 250,
+      "end": 251
+    },
+    {
+      "name": "PUHRCK1",
+      "start": 257,
+      "end": 258
+    },
+    {
+      "name": "PUHRCK2",
+      "start": 259,
+      "end": 260
+    },
+    {
+      "name": "PUHRCK3",
+      "start": 261,
+      "end": 262
+    },
+    {
+      "name": "PUHRCK4",
+      "start": 263,
+      "end": 264
+    },
+    {
+      "name": "PUHRCK5",
+      "start": 265,
+      "end": 266
+    },
+    {
+      "name": "PUHRCK6",
+      "start": 267,
+      "end": 268
+    },
+    {
+      "name": "PUHRCK7",
+      "start": 269,
+      "end": 270
+    },
+    {
+      "name": "PUHRCK12",
+      "start": 271,
+      "end": 272
+    },
+    {
+      "name": "PULAYDT",
+      "start": 273,
+      "end": 274
+    },
+    {
+      "name": "PULAY6M",
+      "start": 275,
+      "end": 276
+    },
+    {
+      "name": "PELAYAVL",
+      "start": 277,
+      "end": 278
+    },
+    {
+      "name": "PULAYAVR",
+      "start": 279,
+      "end": 280
+    },
+    {
+      "name": "PELAYLK",
+      "start": 281,
+      "end": 282
+    },
+    {
+      "name": "PELAYDUR",
+      "start": 283,
+      "end": 285
+    },
+    {
+      "name": "PELAYFTO",
+      "start": 286,
+      "end": 287
+    },
+    {
+      "name": "PULAYCK1",
+      "start": 288,
+      "end": 289
+    },
+    {
+      "name": "PULAYCK2",
+      "start": 290,
+      "end": 291
+    },
+    {
+      "name": "PULAYCK3",
+      "start": 292,
+      "end": 293
+    },
+    {
+      "name": "PULK",
+      "start": 294,
+      "end": 295
+    },
+    {
+      "name": "PELKM1",
+      "start": 296,
+      "end": 297
+    },
+    {
+      "name": "PULKM2",
+      "start": 298,
+      "end": 299
+    },
+    {
+      "name": "PULKM3",
+      "start": 300,
+      "end": 301
+    },
+    {
+      "name": "PULKM4",
+      "start": 302,
+      "end": 303
+    },
+    {
+      "name": "PULKM5",
+      "start": 304,
+      "end": 305
+    },
+    {
+      "name": "PULKM6",
+      "start": 306,
+      "end": 307
+    },
+    {
+      "name": "PULKDK1",
+      "start": 308,
+      "end": 309
+    },
+    {
+      "name": "PULKDK2",
+      "start": 310,
+      "end": 311
+    },
+    {
+      "name": "PULKDK3",
+      "start": 312,
+      "end": 313
+    },
+    {
+      "name": "PULKDK4",
+      "start": 314,
+      "end": 315
+    },
+    {
+      "name": "PULKDK5",
+      "start": 316,
+      "end": 317
+    },
+    {
+      "name": "PULKDK6",
+      "start": 318,
+      "end": 319
+    },
+    {
+      "name": "PULKPS1",
+      "start": 320,
+      "end": 321
+    },
+    {
+      "name": "PULKPS2",
+      "start": 322,
+      "end": 323
+    },
+    {
+      "name": "PULKPS3",
+      "start": 324,
+      "end": 325
+    },
+    {
+      "name": "PULKPS4",
+      "start": 326,
+      "end": 327
+    },
+    {
+      "name": "PULKPS5",
+      "start": 328,
+      "end": 329
+    },
+    {
+      "name": "PULKPS6",
+      "start": 330,
+      "end": 331
+    },
+    {
+      "name": "PELKAVL",
+      "start": 332,
+      "end": 333
+    },
+    {
+      "name": "PULKAVR",
+      "start": 334,
+      "end": 335
+    },
+    {
+      "name": "PELKLL1O",
+      "start": 336,
+      "end": 337
+    },
+    {
+      "name": "PELKLL2O",
+      "start": 338,
+      "end": 339
+    },
+    {
+      "name": "PELKLWO",
+      "start": 340,
+      "end": 341
+    },
+    {
+      "name": "PELKDUR",
+      "start": 342,
+      "end": 344
+    },
+    {
+      "name": "PELKFTO",
+      "start": 345,
+      "end": 346
+    },
+    {
+      "name": "PEDWWNTO",
+      "start": 347,
+      "end": 348
+    },
+    {
+      "name": "PEDWRSN",
+      "start": 349,
+      "end": 350
+    },
+    {
+      "name": "PEDWLKO",
+      "start": 351,
+      "end": 352
+    },
+    {
+      "name": "PEDWWK",
+      "start": 353,
+      "end": 354
+    },
+    {
+      "name": "PEDW4WK",
+      "start": 355,
+      "end": 356
+    },
+    {
+      "name": "PEDWLKWK",
+      "start": 357,
+      "end": 358
+    },
+    {
+      "name": "PEDWAVL",
+      "start": 359,
+      "end": 360
+    },
+    {
+      "name": "PEDWAVR",
+      "start": 361,
+      "end": 362
+    },
+    {
+      "name": "PUDWCK1",
+      "start": 363,
+      "end": 364
+    },
+    {
+      "name": "PUDWCK2",
+      "start": 365,
+      "end": 366
+    },
+    {
+      "name": "PUDWCK3",
+      "start": 367,
+      "end": 368
+    },
+    {
+      "name": "PUDWCK4",
+      "start": 369,
+      "end": 370
+    },
+    {
+      "name": "PUDWCK5",
+      "start": 371,
+      "end": 372
+    },
+    {
+      "name": "PEJHWKO",
+      "start": 373,
+      "end": 374
+    },
+    {
+      "name": "PUJHDP1O",
+      "start": 375,
+      "end": 376
+    },
+    {
+      "name": "PEJHRSN",
+      "start": 377,
+      "end": 378
+    },
+    {
+      "name": "PEJHWANT",
+      "start": 379,
+      "end": 380
+    },
+    {
+      "name": "PUJHCK1",
+      "start": 381,
+      "end": 382
+    },
+    {
+      "name": "PUJHCK2",
+      "start": 383,
+      "end": 384
+    },
+    {
+      "name": "PRABSREA",
+      "start": 385,
+      "end": 386
+    },
+    {
+      "name": "PRCIVLF",
+      "start": 387,
+      "end": 388
+    },
+    {
+      "name": "PRDISC",
+      "start": 389,
+      "end": 390
+    },
+    {
+      "name": "PREMPHRS",
+      "start": 391,
+      "end": 392
+    },
+    {
+      "name": "PREMPNOT",
+      "start": 393,
+      "end": 394
+    },
+    {
+      "name": "PREXPLF",
+      "start": 395,
+      "end": 396
+    },
+    {
+      "name": "PRFTLF",
+      "start": 397,
+      "end": 398
+    },
+    {
+      "name": "PRHRUSL",
+      "start": 399,
+      "end": 400
+    },
+    {
+      "name": "PRJOBSEA",
+      "start": 401,
+      "end": 402
+    },
+    {
+      "name": "PRPTHRS",
+      "start": 403,
+      "end": 404
+    },
+    {
+      "name": "PRPTREA",
+      "start": 405,
+      "end": 406
+    },
+    {
+      "name": "PRUNEDUR",
+      "start": 407,
+      "end": 409
+    },
+    {
+      "name": "PRUNTYPE",
+      "start": 412,
+      "end": 413
+    },
+    {
+      "name": "PRWKSCH",
+      "start": 414,
+      "end": 415
+    },
+    {
+      "name": "PRWKSTAT",
+      "start": 416,
+      "end": 417
+    },
+    {
+      "name": "PRWNTJOB",
+      "start": 418,
+      "end": 419
+    },
+    {
+      "name": "PUJHCK3",
+      "start": 420,
+      "end": 421
+    },
+    {
+      "name": "PUJHCK4",
+      "start": 422,
+      "end": 423
+    },
+    {
+      "name": "PUJHCK5",
+      "start": 424,
+      "end": 425
+    },
+    {
+      "name": "PUIODP1",
+      "start": 426,
+      "end": 427
+    },
+    {
+      "name": "PUIODP2",
+      "start": 428,
+      "end": 429
+    },
+    {
+      "name": "PUIODP3",
+      "start": 430,
+      "end": 431
+    },
+    {
+      "name": "PEIO1COW",
+      "start": 432,
+      "end": 433
+    },
+    {
+      "name": "PUIO1MFG",
+      "start": 434,
+      "end": 435
+    },
+    {
+      "name": "PEIO2COW",
+      "start": 442,
+      "end": 443
+    },
+    {
+      "name": "PUIO2MFG",
+      "start": 444,
+      "end": 445
+    },
+    {
+      "name": "PUIOCK1",
+      "start": 452,
+      "end": 453
+    },
+    {
+      "name": "PUIOCK2",
+      "start": 454,
+      "end": 455
+    },
+    {
+      "name": "PUIOCK3",
+      "start": 456,
+      "end": 457
+    },
+    {
+      "name": "PRIOELG",
+      "start": 458,
+      "end": 459
+    },
+    {
+      "name": "PRAGNA",
+      "start": 460,
+      "end": 461
+    },
+    {
+      "name": "PRCOW1",
+      "start": 462,
+      "end": 463
+    },
+    {
+      "name": "PRCOW2",
+      "start": 464,
+      "end": 465
+    },
+    {
+      "name": "PRCOWPG",
+      "start": 466,
+      "end": 467
+    },
+    {
+      "name": "PRDTCOW1",
+      "start": 468,
+      "end": 469
+    },
+    {
+      "name": "PRDTCOW2",
+      "start": 470,
+      "end": 471
+    },
+    {
+      "name": "PRDTIND1",
+      "start": 472,
+      "end": 473
+    },
+    {
+      "name": "PRDTIND2",
+      "start": 474,
+      "end": 475
+    },
+    {
+      "name": "PRDTOCC1",
+      "start": 476,
+      "end": 477
+    },
+    {
+      "name": "PRDTOCC2",
+      "start": 478,
+      "end": 479
+    },
+    {
+      "name": "PREMP",
+      "start": 480,
+      "end": 481
+    },
+    {
+      "name": "PRMJIND1",
+      "start": 482,
+      "end": 483
+    },
+    {
+      "name": "PRMJIND2",
+      "start": 484,
+      "end": 485
+    },
+    {
+      "name": "PRMJOCC1",
+      "start": 486,
+      "end": 487
+    },
+    {
+      "name": "PRMJOCC2",
+      "start": 488,
+      "end": 489
+    },
+    {
+      "name": "PRMJOCGR",
+      "start": 490,
+      "end": 491
+    },
+    {
+      "name": "PRNAGPWS",
+      "start": 492,
+      "end": 493
+    },
+    {
+      "name": "PRNAGWS",
+      "start": 494,
+      "end": 495
+    },
+    {
+      "name": "PRSJMJ",
+      "start": 496,
+      "end": 497
+    },
+    {
+      "name": "PRERELG",
+      "start": 498,
+      "end": 499
+    },
+    {
+      "name": "PEERNUOT",
+      "start": 500,
+      "end": 501
+    },
+    {
+      "name": "PEERNPER",
+      "start": 502,
+      "end": 503
+    },
+    {
+      "name": "PEERNRT",
+      "start": 504,
+      "end": 505
+    },
+    {
+      "name": "PEERNHRY",
+      "start": 506,
+      "end": 507
+    },
+    {
+      "name": "PTERNH1C",
+      "start": 508,
+      "end": 511
+    },
+    {
+      "name": "PTERNH2",
+      "start": 512,
+      "end": 515
+    },
+    {
+      "name": "PTERNH1O",
+      "start": 516,
+      "end": 519
+    },
+    {
+      "name": "PTERNHLY",
+      "start": 520,
+      "end": 523
+    },
+    {
+      "name": "PTHR",
+      "start": 524,
+      "end": 524
+    },
+    {
+      "name": "PEERNHRO",
+      "start": 525,
+      "end": 526
+    },
+    {
+      "name": "PTERNWA",
+      "start": 527,
+      "end": 534
+    },
+    {
+      "name": "PTWK",
+      "start": 535,
+      "end": 535
+    },
+    {
+      "name": "PRERNMIN",
+      "start": 536,
+      "end": 537
+    },
+    {
+      "name": "PTERN",
+      "start": 540,
+      "end": 547
+    },
+    {
+      "name": "PTERN2",
+      "start": 548,
+      "end": 555
+    },
+    {
+      "name": "PTOT",
+      "start": 556,
+      "end": 556
+    },
+    {
+      "name": "PEERNWKP",
+      "start": 559,
+      "end": 560
+    },
+    {
+      "name": "PEERNLAB",
+      "start": 561,
+      "end": 562
+    },
+    {
+      "name": "PEERNCOV",
+      "start": 563,
+      "end": 564
+    },
+    {
+      "name": "PENLFJH",
+      "start": 565,
+      "end": 566
+    },
+    {
+      "name": "PENLFRET",
+      "start": 567,
+      "end": 568
+    },
+    {
+      "name": "PENLFACT",
+      "start": 569,
+      "end": 570
+    },
+    {
+      "name": "PUNLFCK1",
+      "start": 571,
+      "end": 572
+    },
+    {
+      "name": "PUNLFCK2",
+      "start": 573,
+      "end": 574
+    },
+    {
+      "name": "PESCHENR",
+      "start": 575,
+      "end": 576
+    },
+    {
+      "name": "PESCHFT",
+      "start": 577,
+      "end": 578
+    },
+    {
+      "name": "PESCHLVL",
+      "start": 579,
+      "end": 580
+    },
+    {
+      "name": "PRNLFSCH",
+      "start": 581,
+      "end": 582
+    },
+    {
+      "name": "PWFMWGT",
+      "start": 583,
+      "end": 592
+    },
+    {
+      "name": "PWLGWGT",
+      "start": 593,
+      "end": 602
+    },
+    {
+      "name": "PWORWGT",
+      "start": 603,
+      "end": 612
+    },
+    {
+      "name": "PWSSWGT",
+      "start": 613,
+      "end": 622
+    },
+    {
+      "name": "PWVETWGT",
+      "start": 623,
+      "end": 632
+    },
+    {
+      "name": "PRCHLD",
+      "start": 633,
+      "end": 634
+    },
+    {
+      "name": "PRNMCHLD",
+      "start": 635,
+      "end": 636
+    },
+    {
+      "name": "PXPDEMP1",
+      "start": 637,
+      "end": 638
+    },
+    {
+      "name": "PRWERNAL",
+      "start": 639,
+      "end": 640
+    },
+    {
+      "name": "PRHERNAL",
+      "start": 641,
+      "end": 642
+    },
+    {
+      "name": "HXTENURE",
+      "start": 643,
+      "end": 644
+    },
+    {
+      "name": "HXHOUSUT",
+      "start": 645,
+      "end": 646
+    },
+    {
+      "name": "HXTELHHD",
+      "start": 647,
+      "end": 648
+    },
+    {
+      "name": "HXTELAVL",
+      "start": 649,
+      "end": 650
+    },
+    {
+      "name": "HXPHONEO",
+      "start": 651,
+      "end": 652
+    },
+    {
+      "name": "PXINUSYR",
+      "start": 653,
+      "end": 654
+    },
+    {
+      "name": "PXRRP",
+      "start": 655,
+      "end": 656
+    },
+    {
+      "name": "PXAGE",
+      "start": 659,
+      "end": 660
+    },
+    {
+      "name": "PXMARITL",
+      "start": 661,
+      "end": 662
+    },
+    {
+      "name": "PXSPOUSE",
+      "start": 663,
+      "end": 664
+    },
+    {
+      "name": "PXSEX",
+      "start": 665,
+      "end": 666
+    },
+    {
+      "name": "PXAFWHN1",
+      "start": 667,
+      "end": 668
+    },
+    {
+      "name": "PXAFNOW",
+      "start": 669,
+      "end": 670
+    },
+    {
+      "name": "PXEDUCA",
+      "start": 671,
+      "end": 672
+    },
+    {
+      "name": "PXRACE1",
+      "start": 673,
+      "end": 674
+    },
+    {
+      "name": "PXNATVTY",
+      "start": 675,
+      "end": 676
+    },
+    {
+      "name": "PXMNTVTY",
+      "start": 677,
+      "end": 678
+    },
+    {
+      "name": "PXFNTVTY",
+      "start": 679,
+      "end": 680
+    },
+    {
+      "name": "PXNMEMP1",
+      "start": 681,
+      "end": 682
+    },
+    {
+      "name": "PXHSPNON",
+      "start": 683,
+      "end": 684
+    },
+    {
+      "name": "PXMLR",
+      "start": 685,
+      "end": 686
+    },
+    {
+      "name": "PXRET1",
+      "start": 687,
+      "end": 688
+    },
+    {
+      "name": "PXABSRSN",
+      "start": 689,
+      "end": 690
+    },
+    {
+      "name": "PXABSPDO",
+      "start": 691,
+      "end": 692
+    },
+    {
+      "name": "PXMJOT",
+      "start": 693,
+      "end": 694
+    },
+    {
+      "name": "PXMJNUM",
+      "start": 695,
+      "end": 696
+    },
+    {
+      "name": "PXHRUSL1",
+      "start": 697,
+      "end": 698
+    },
+    {
+      "name": "PXHRUSL2",
+      "start": 699,
+      "end": 700
+    },
+    {
+      "name": "PXHRFTPT",
+      "start": 701,
+      "end": 702
+    },
+    {
+      "name": "PXHRUSLT",
+      "start": 703,
+      "end": 704
+    },
+    {
+      "name": "PXHRWANT",
+      "start": 705,
+      "end": 706
+    },
+    {
+      "name": "PXHRRSN1",
+      "start": 707,
+      "end": 708
+    },
+    {
+      "name": "PXHRRSN2",
+      "start": 709,
+      "end": 710
+    },
+    {
+      "name": "PXHRACT1",
+      "start": 711,
+      "end": 712
+    },
+    {
+      "name": "PXHRACT2",
+      "start": 713,
+      "end": 714
+    },
+    {
+      "name": "PXHRACTT",
+      "start": 715,
+      "end": 716
+    },
+    {
+      "name": "PXHRRSN3",
+      "start": 717,
+      "end": 718
+    },
+    {
+      "name": "PXHRAVL",
+      "start": 719,
+      "end": 720
+    },
+    {
+      "name": "PXLAYAVL",
+      "start": 721,
+      "end": 722
+    },
+    {
+      "name": "PXLAYLK",
+      "start": 723,
+      "end": 724
+    },
+    {
+      "name": "PXLAYDUR",
+      "start": 725,
+      "end": 726
+    },
+    {
+      "name": "PXLAYFTO",
+      "start": 727,
+      "end": 728
+    },
+    {
+      "name": "PXLKM1",
+      "start": 729,
+      "end": 730
+    },
+    {
+      "name": "PXLKAVL",
+      "start": 731,
+      "end": 732
+    },
+    {
+      "name": "PXLKLL1O",
+      "start": 733,
+      "end": 734
+    },
+    {
+      "name": "PXLKLL2O",
+      "start": 735,
+      "end": 736
+    },
+    {
+      "name": "PXLKLWO",
+      "start": 737,
+      "end": 738
+    },
+    {
+      "name": "PXLKDUR",
+      "start": 739,
+      "end": 740
+    },
+    {
+      "name": "PXLKFTO",
+      "start": 741,
+      "end": 742
+    },
+    {
+      "name": "PXDWWNTO",
+      "start": 743,
+      "end": 744
+    },
+    {
+      "name": "PXDWRSN",
+      "start": 745,
+      "end": 746
+    },
+    {
+      "name": "PXDWLKO",
+      "start": 747,
+      "end": 748
+    },
+    {
+      "name": "PXDWWK",
+      "start": 749,
+      "end": 750
+    },
+    {
+      "name": "PXDW4WK",
+      "start": 751,
+      "end": 752
+    },
+    {
+      "name": "PXDWLKWK",
+      "start": 753,
+      "end": 754
+    },
+    {
+      "name": "PXDWAVL",
+      "start": 755,
+      "end": 756
+    },
+    {
+      "name": "PXDWAVR",
+      "start": 757,
+      "end": 758
+    },
+    {
+      "name": "PXJHWKO",
+      "start": 759,
+      "end": 760
+    },
+    {
+      "name": "PXJHRSN",
+      "start": 761,
+      "end": 762
+    },
+    {
+      "name": "PXJHWANT",
+      "start": 763,
+      "end": 764
+    },
+    {
+      "name": "PXIO1COW",
+      "start": 765,
+      "end": 766
+    },
+    {
+      "name": "PXIO1ICD",
+      "start": 767,
+      "end": 768
+    },
+    {
+      "name": "PXIO1OCD",
+      "start": 769,
+      "end": 770
+    },
+    {
+      "name": "PXIO2COW",
+      "start": 771,
+      "end": 772
+    },
+    {
+      "name": "PXIO2ICD",
+      "start": 773,
+      "end": 774
+    },
+    {
+      "name": "PXIO2OCD",
+      "start": 775,
+      "end": 776
+    },
+    {
+      "name": "PXERNUOT",
+      "start": 777,
+      "end": 778
+    },
+    {
+      "name": "PXERNPER",
+      "start": 779,
+      "end": 780
+    },
+    {
+      "name": "PXERNH1O",
+      "start": 781,
+      "end": 782
+    },
+    {
+      "name": "PXERNHRO",
+      "start": 783,
+      "end": 784
+    },
+    {
+      "name": "PXERN",
+      "start": 785,
+      "end": 786
+    },
+    {
+      "name": "PXPDEMP2",
+      "start": 787,
+      "end": 788
+    },
+    {
+      "name": "PXNMEMP2",
+      "start": 789,
+      "end": 790
+    },
+    {
+      "name": "PXERNWKP",
+      "start": 791,
+      "end": 792
+    },
+    {
+      "name": "PXERNRT",
+      "start": 793,
+      "end": 794
+    },
+    {
+      "name": "PXERNHRY",
+      "start": 795,
+      "end": 796
+    },
+    {
+      "name": "PXERNH2",
+      "start": 797,
+      "end": 798
+    },
+    {
+      "name": "PXERNLAB",
+      "start": 799,
+      "end": 800
+    },
+    {
+      "name": "PXERNCOV",
+      "start": 801,
+      "end": 802
+    },
+    {
+      "name": "PXNLFJH",
+      "start": 803,
+      "end": 804
+    },
+    {
+      "name": "PXNLFRET",
+      "start": 805,
+      "end": 806
+    },
+    {
+      "name": "PXNLFACT",
+      "start": 807,
+      "end": 808
+    },
+    {
+      "name": "PXSCHENR",
+      "start": 809,
+      "end": 810
+    },
+    {
+      "name": "PXSCHFT",
+      "start": 811,
+      "end": 812
+    },
+    {
+      "name": "PXSCHLVL",
+      "start": 813,
+      "end": 814
+    },
+    {
+      "name": "QSTNUM",
+      "start": 815,
+      "end": 819
+    },
+    {
+      "name": "OCCURNUM",
+      "start": 820,
+      "end": 821
+    },
+    {
+      "name": "PEDIPGED",
+      "start": 822,
+      "end": 823
+    },
+    {
+      "name": "PEHGCOMP",
+      "start": 824,
+      "end": 825
+    },
+    {
+      "name": "PECYC",
+      "start": 826,
+      "end": 827
+    },
+    {
+      "name": "PXDIPGED",
+      "start": 834,
+      "end": 835
+    },
+    {
+      "name": "PXHGCOMP",
+      "start": 836,
+      "end": 837
+    },
+    {
+      "name": "PXCYC",
+      "start": 838,
+      "end": 839
+    },
+    {
+      "name": "PWCMPWGT",
+      "start": 846,
+      "end": 855
+    },
+    {
+      "name": "PEIO1ICD",
+      "start": 856,
+      "end": 859
+    },
+    {
+      "name": "PTIO1OCD",
+      "start": 860,
+      "end": 863
+    },
+    {
+      "name": "PEIO2ICD",
+      "start": 864,
+      "end": 867
+    },
+    {
+      "name": "PTIO2OCD",
+      "start": 868,
+      "end": 871
+    },
+    {
+      "name": "PRIMIND1",
+      "start": 872,
+      "end": 873
+    },
+    {
+      "name": "PRIMIND2",
+      "start": 874,
+      "end": 875
+    },
+    {
+      "name": "PEAFWHN1",
+      "start": 876,
+      "end": 877
+    },
+    {
+      "name": "PEAFWHN2",
+      "start": 878,
+      "end": 879
+    },
+    {
+      "name": "PEAFWHN3",
+      "start": 880,
+      "end": 881
+    },
+    {
+      "name": "PEAFWHN4",
+      "start": 882,
+      "end": 883
+    },
+    {
+      "name": "PXAFEVER",
+      "start": 884,
+      "end": 885
+    },
+    {
+      "name": "PEPAR2",
+      "start": 886,
+      "end": 887
+    },
+    {
+      "name": "PEPAR1",
+      "start": 888,
+      "end": 889
+    },
+    {
+      "name": "PEPAR2TYP",
+      "start": 890,
+      "end": 891
+    },
+    {
+      "name": "PEPAR1TYP",
+      "start": 892,
+      "end": 893
+    },
+    {
+      "name": "PECOHAB",
+      "start": 894,
+      "end": 895
+    },
+    {
+      "name": "PXPAR2",
+      "start": 896,
+      "end": 897
+    },
+    {
+      "name": "PXPAR1",
+      "start": 898,
+      "end": 899
+    },
+    {
+      "name": "PXPAR2TYP",
+      "start": 900,
+      "end": 901
+    },
+    {
+      "name": "PXPAR1TYP",
+      "start": 902,
+      "end": 903
+    },
+    {
+      "name": "PXCOHAB",
+      "start": 904,
+      "end": 905
+    },
+    {
+      "name": "PEDISEAR",
+      "start": 906,
+      "end": 907
+    },
+    {
+      "name": "PEDISEYE",
+      "start": 908,
+      "end": 909
+    },
+    {
+      "name": "PEDISREM",
+      "start": 910,
+      "end": 911
+    },
+    {
+      "name": "PEDISPHY",
+      "start": 912,
+      "end": 913
+    },
+    {
+      "name": "PEDISDRS",
+      "start": 914,
+      "end": 915
+    },
+    {
+      "name": "PEDISOUT",
+      "start": 916,
+      "end": 917
+    },
+    {
+      "name": "PRDISFLG",
+      "start": 918,
+      "end": 919
+    },
+    {
+      "name": "PXDISEAR",
+      "start": 920,
+      "end": 921
+    },
+    {
+      "name": "PXDISEYE",
+      "start": 922,
+      "end": 923
+    },
+    {
+      "name": "PXDISREM",
+      "start": 924,
+      "end": 925
+    },
+    {
+      "name": "PXDISPHY",
+      "start": 926,
+      "end": 927
+    },
+    {
+      "name": "PXDISDRS",
+      "start": 928,
+      "end": 929
+    },
+    {
+      "name": "PXDISOUT",
+      "start": 930,
+      "end": 931
+    },
+    {
+      "name": "HXFAMINC",
+      "start": 932,
+      "end": 933
+    },
+    {
+      "name": "PRDASIAN",
+      "start": 934,
+      "end": 935
+    },
+    {
+      "name": "PEPDEMP1",
+      "start": 936,
+      "end": 937
+    },
+    {
+      "name": "PTNMEMP1",
+      "start": 938,
+      "end": 939
+    },
+    {
+      "name": "PEPDEMP2",
+      "start": 940,
+      "end": 941
+    },
+    {
+      "name": "PTNMEMP2",
+      "start": 942,
+      "end": 943
+    },
+    {
+      "name": "PECERT1",
+      "start": 944,
+      "end": 945
+    },
+    {
+      "name": "PECERT2",
+      "start": 946,
+      "end": 947
+    },
+    {
+      "name": "PECERT3",
+      "start": 948,
+      "end": 949
+    },
+    {
+      "name": "PXCERT1",
+      "start": 950,
+      "end": 951
+    },
+    {
+      "name": "PXCERT2",
+      "start": 952,
+      "end": 953
+    },
+    {
+      "name": "PXCERT3",
+      "start": 954,
+      "end": 955
+    },
+    {
+      "name": "PES1",
+      "start": 1001,
+      "end": 1002
+    },
+    {
+      "name": "PES2",
+      "start": 1003,
+      "end": 1004
+    },
+    {
+      "name": "PES4",
+      "start": 1005,
+      "end": 1006
+    },
+    {
+      "name": "PES5",
+      "start": 1007,
+      "end": 1008
+    },
+    {
+      "name": "PES6",
+      "start": 1009,
+      "end": 1010
+    },
+    {
+      "name": "PES7",
+      "start": 1011,
+      "end": 1012
+    },
+    {
+      "name": "PES9",
+      "start": 1013,
+      "end": 1014
+    },
+    {
+      "name": "PES10",
+      "start": 1015,
+      "end": 1016
+    },
+    {
+      "name": "PES11",
+      "start": 1017,
+      "end": 1018
+    },
+    {
+      "name": "PES12",
+      "start": 1019,
+      "end": 1020
+    },
+    {
+      "name": "PES13",
+      "start": 1021,
+      "end": 1022
+    },
+    {
+      "name": "PES14",
+      "start": 1023,
+      "end": 1024
+    },
+    {
+      "name": "PES15",
+      "start": 1025,
+      "end": 1026
+    },
+    {
+      "name": "PES15A",
+      "start": 1027,
+      "end": 1028
+    },
+    {
+      "name": "PES16",
+      "start": 1029,
+      "end": 1030
+    },
+    {
+      "name": "PES16A",
+      "start": 1031,
+      "end": 1032
+    },
+    {
+      "name": "PES16D",
+      "start": 1033,
+      "end": 1034
+    },
+    {
+      "name": "PTS16E",
+      "start": 1035,
+      "end": 1037
+    },
+    {
+      "name": "PES16F",
+      "start": 1038,
+      "end": 1039
+    },
+    {
+      "name": "PES17",
+      "start": 1040,
+      "end": 1041
+    },
+    {
+      "name": "PES18",
+      "start": 1042,
+      "end": 1043
+    },
+    {
+      "name": "PRSUPINT",
+      "start": 1044,
+      "end": 1045
+    },
+    {
+      "name": "PRSUPVOL",
+      "start": 1046,
+      "end": 1047
+    },
+    {
+      "name": "PRSELF",
+      "start": 1048,
+      "end": 1049
+    },
+    {
+      "name": "PWNRWGT",
+      "start": 1050,
+      "end": 1059
+    },
+    {
+      "name": "PEELGFLG",
+      "start": 1060,
+      "end": 1061
+    },
+    {
+      "name": "PESWP1A",
+      "start": 1062,
+      "end": 1063
+    },
+    {
+      "name": "PESWP1B",
+      "start": 1064,
+      "end": 1065
+    },
+    {
+      "name": "PESWP1C",
+      "start": 1066,
+      "end": 1067
+    },
+    {
+      "name": "PESWP1D",
+      "start": 1068,
+      "end": 1069
+    },
+    {
+      "name": "PESWP2",
+      "start": 1070,
+      "end": 1071
+    },
+    {
+      "name": "PWSRWGT",
+      "start": 1072,
+      "end": 1081
+    }
+  ]
+}

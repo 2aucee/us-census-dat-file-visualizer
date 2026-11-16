@@ -1,6 +1,6 @@
 # Census Data Explorer
 
-A local Streamlit app and Jupyter research starter for exploring Census Bureau text files. The app supports delimited files and fixed-width records when you supply the official layout. It does not guess Census field positions or code meanings.
+A local Streamlit app and Jupyter research starter for exploring Census Bureau text files. The app supports delimited files, fixed-width records when you supply the official layout, and the September 2023 CPS Civic Engagement and Volunteering `sep23pub.dat` file with its bundled Census-documented record layout.
 
 ## Set up on Windows
 
@@ -12,9 +12,11 @@ py -m venv .venv
 .\.venv\Scripts\python.exe -m streamlit run app.py
 ```
 
-Streamlit opens the website in your browser. Upload a `.dat`, `.txt`, `.csv`, or `.tsv` file. Choose the delimiter for delimited files. For fixed-width files, paste a CSV layout with `name,start,end` columns; positions are one-based and inclusive as in most record-layout documentation.
+Streamlit opens the website in your browser. Upload a `.dat`, `.txt`, `.csv`, or `.tsv` file. `.dat` files default to fixed-width mode. The known `sep23pub.dat` file is recognized by name and parsed with the included official field positions. For other fixed-width files, paste a CSV layout with `name,start,end` columns; positions are one-based and inclusive as in most record-layout documentation.
 
 The app shows a preview, missing-value and field summaries, numeric distributions/statistics, and category counts. You can optionally select a numeric weight field for descriptive weighted summaries. Weighted values are not a substitute for CPS survey-design variance estimation and do not account for replicate weights.
+
+The bundled `sep23pub.dat` positions come from the Census Bureau's [September 2023 CPS technical documentation](https://www2.census.gov/programs-surveys/cps/techdocs/cpssep23.pdf).
 
 ## Jupyter notebook
 

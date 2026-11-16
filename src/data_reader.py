@@ -4,9 +4,82 @@ from __future__ import annotations
 
 import csv
 import io
-from collections.abc import Sequence
+import json
+from collections.abc import Mapping, Sequence
+from pathlib import Path
+from typing import TextIO
 
 import pandas as pd
+
+
+def load_sep23pub_layout() -> tuple[list[str], list[tuple[int, int]]]:
+    """Load Census-documented positions for the September 2023 public CPS file."""
+    layout_path = Path(__file__).parent / "layouts" / "sep23pub_layout.json"
+    try:
+        with layout_path.open(encoding="utf-8") as layout_file:
+            layout = json.load(layout_file)
+    except (OSError, json.JSONDecodeError) as error:
+        raise ValueError(f"Could not load the bundled SEP23PUB record layout: {error}") from error
+
+    fields = layout.get("fields") if isinstance(layout, dict) else None
+    if not isinstance(fields, list) or not fields:
+        raise ValueError("The bundled SEP23PUB record layout is empty or invalid.")
+
+    names: list[str] = []
+    colspecs: list[tuple[int, int]] = []
+    for field in fields:
+        try:
+            name = field["name"]
+            start = int(field["start"])
+            end = int(field["end"])
+        except (KeyError, TypeError, ValueError) as error:
+            raise ValueError("The bundled SEP23PUB record layout contains invalid fields.") from error
+        if not isinstance(name, str) or not name or start < 1 or end < start:
+            raise ValueError("The bundled SEP23PUB record layout contains invalid fields.")
+        if name in names:
+            raise ValueError(f"The bundled SEP23PUB layout has a duplicate field: {name}")
+        names.append(name)
+        colspecs.append((start - 1, end))
+
+    ordered = sorted(colspecs)
+    if any(current[0] < previous[1] for previous, current in zip(ordered, ordered[1:])):
+        raise ValueError("The bundled SEP23PUB record layout contains overlapping fields.")
+    return names, colspecs
+
+
+def read_sep23pub_file(
+    text: str | TextIO,
+    *,
+    columns: Sequence[str] | None = None,
+    nrows: int | None = None,
+) -> pd.DataFrame:
+    """Read the September 2023 CPS public file, preserving ID and geography codes."""
+    names, colspecs = load_sep23pub_layout()
+    text_fields = {
+        name: str
+        for name in (
+            "HRHHID",
+            "HRHHID2",
+            "GESTFIPS",
+            "GTCBSA",
+            "GTCO",
+            "GTCBSAST",
+            "GTMETSTA",
+            "GTINDVPC",
+            "GTCBSASZ",
+            "GTCSA",
+        )
+    }
+    if columns is not None:
+        text_fields = {name: kind for name, kind in text_fields.items() if name in columns}
+    return read_fixed_width(
+        text,
+        names=names,
+        colspecs=colspecs,
+        dtype=text_fields,
+        columns=columns,
+        nrows=nrows,
+    )
 
 
 def decode_text(contents: bytes) -> str:
@@ -86,22 +159,44 @@ def read_delimited(
 
 
 def read_fixed_width(
-    text: str,
+    text: str | TextIO,
     *,
     names: Sequence[str],
     colspecs: Sequence[tuple[int, int]],
+    dtype: Mapping[str, type] | None = None,
+    columns: Sequence[str] | None = None,
+    nrows: int | None = None,
 ) -> pd.DataFrame:
     """Read fixed-width records using zero-based, end-exclusive pandas colspecs."""
-    if not text.strip():
+    if isinstance(text, str):
+        is_empty = not text.strip()
+    else:
+        position = text.tell()
+        is_empty = not text.read(1)
+        text.seek(position)
+    if is_empty:
         raise ValueError("The uploaded file is empty.")
     if not names or len(names) != len(colspecs):
         raise ValueError("Each fixed-width field must have exactly one name and position range.")
+    if len(set(names)) != len(names):
+        raise ValueError("Fixed-width field names must be unique.")
+    selected_names = list(names if columns is None else columns)
+    if not selected_names or any(name not in names for name in selected_names):
+        raise ValueError("Select one or more fields that exist in the fixed-width layout.")
+    colspec_by_name = dict(zip(names, colspecs))
+    ordered_fields = sorted(
+        ((name, colspec_by_name[name]) for name in selected_names),
+        key=lambda field: field[1][0],
+    )
     try:
-        return pd.read_fwf(
-            io.StringIO(text),
-            colspecs=list(colspecs),
-            names=list(names),
+        frame = pd.read_fwf(
+            io.StringIO(text) if isinstance(text, str) else text,
+            colspecs=[colspec for _, colspec in ordered_fields],
+            names=[name for name, _ in ordered_fields],
             header=None,
+            dtype=dtype,
+            nrows=nrows,
         )
-    except (pd.errors.ParserError, ValueError) as error:
+        return frame.loc[:, selected_names]
+    except (pd.errors.ParserError, UnicodeDecodeError, ValueError) as error:
         raise ValueError(f"Could not parse the fixed-width file: {error}") from error

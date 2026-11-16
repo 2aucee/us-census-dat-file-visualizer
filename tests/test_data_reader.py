@@ -2,9 +2,11 @@ import pytest
 
 from src.data_reader import (
     decode_text,
+    load_sep23pub_layout,
     parse_fixed_width_layout,
     read_delimited,
     read_fixed_width,
+    read_sep23pub_file,
 )
 
 
@@ -30,6 +32,24 @@ def test_parse_fixed_width_layout_and_read():
     assert names == ["AGE", "SEX"]
     assert colspecs == [(0, 2), (2, 3)]
     assert frame.iloc[0].tolist() == [25, 1]
+
+
+def test_sep23pub_layout_reads_documented_fields():
+    names, colspecs = load_sep23pub_layout()
+    assert len(names) == 424
+    assert names[:6] == ["HRHHID", "HRMONTH", "HRYEAR4", "HURESPLI", "HUFINAL", "FILLER"]
+    assert colspecs[names.index("HRMONTH")] == (15, 17)
+    assert colspecs[names.index("PES1")] == (1000, 1002)
+    assert colspecs[names.index("PWSRWGT")] == (1071, 1081)
+
+    record = [" "] * 1081
+    record[:15] = "000000000000001"
+    record[15:17] = "09"
+    record[1000:1002] = "01"
+    frame = read_sep23pub_file("".join(record))
+    assert frame.loc[0, "HRHHID"] == "000000000000001"
+    assert frame.loc[0, "HRMONTH"] == 9
+    assert frame.loc[0, "PES1"] == 1
 
 
 @pytest.mark.parametrize(
