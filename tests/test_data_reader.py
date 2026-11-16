@@ -17,6 +17,7 @@ from src.census_labels import (
     prepare_chart_series,
     unique_variable_labels,
     variable_label,
+    volunteer_donation_respondent_mask,
 )
 
 
@@ -53,6 +54,21 @@ def test_read_delimited_pages_through_rows_after_the_header():
         row_offset=2,
     )
     assert page.to_dict("list") == {"age": [40, 50], "group": ["C", "D"]}
+
+
+def test_read_delimited_selects_specific_data_row_positions():
+    selected = read_delimited(
+        "age,group\n20,A\n30,B\n40,C\n50,D\n",
+        columns=["age"],
+        nrows=2,
+        row_positions=[0, 2],
+    )
+    assert selected.to_dict("list") == {"age": [20, 40]}
+
+
+def test_read_delimited_requires_rows_for_explicit_row_selection():
+    with pytest.raises(ValueError, match="Select at least one data row"):
+        read_delimited("age,group\n20,A\n", row_positions=[])
 
 
 def test_read_delimited_detects_separator_when_rows_exceed_sample_buffer():
@@ -150,6 +166,34 @@ def test_official_cps_metadata_labels_additional_fields_and_codes():
     assert prepare_chart_series(
         "PRTAGE", pd.Series([25, 80]), year="2023"
     ).tolist() == [25, 80]
+
+
+def test_volunteer_donation_filter_keeps_all_answer_categories():
+    responses = pd.DataFrame(
+        {
+            "PES16": [1, -1, -9, -1, 2, 1, 1, 1],
+            "PES16A": [-1, 1, -1, -1, 2, -1, -1, -1],
+            "PES17": [1, 1, 2, 1, -9, 1, -1, ""],
+            "PES18": [2, 1, -2, 1, 1, -1, 1, 1],
+        }
+    )
+    assert volunteer_donation_respondent_mask(responses).tolist() == [
+        True,
+        True,
+        True,
+        False,
+        True,
+        False,
+        False,
+        False,
+    ]
+
+
+def test_volunteer_donation_filter_requires_both_donation_fields():
+    with pytest.raises(ValueError, match="PES18"):
+        volunteer_donation_respondent_mask(
+            pd.DataFrame({"PES16": [1], "PES17": [1]})
+        )
 
 
 def test_common_cps_special_codes_are_labeled_for_other_fields():

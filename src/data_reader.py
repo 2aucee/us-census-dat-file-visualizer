@@ -176,10 +176,17 @@ def read_delimited(
     columns: Sequence[str] | None = None,
     nrows: int | None = None,
     row_offset: int = 0,
+    row_positions: Sequence[int] | None = None,
 ) -> pd.DataFrame:
-    """Read delimited records, optionally selecting columns or one page of rows."""
+    """Read selected columns and optionally a page or specific data rows."""
     if row_offset < 0:
         raise ValueError("The row offset cannot be negative.")
+    if row_positions is not None and row_offset:
+        raise ValueError("Choose either a row offset or specific row positions.")
+    if row_positions is not None and not row_positions:
+        raise ValueError("Select at least one data row.")
+    if row_positions is not None and any(position < 0 for position in row_positions):
+        raise ValueError("Row positions cannot be negative.")
     stream = io.StringIO(text) if isinstance(text, str) else text
     position = stream.tell()
     sample_lines = []
@@ -202,6 +209,20 @@ def read_delimited(
                 break
         if separator is None:
             separator = r"\s+"
+    if row_positions is not None:
+        selected_positions = set(row_positions)
+        header_offset = 1 if has_header else 0
+        skip_rows = lambda line_number: (
+            line_number >= header_offset
+            and line_number - header_offset not in selected_positions
+        )
+    elif row_offset:
+        skip_rows = range(
+            1 if has_header else 0,
+            row_offset + (1 if has_header else 0),
+        )
+    else:
+        skip_rows = None
     try:
         return pd.read_csv(
             stream,
@@ -210,11 +231,7 @@ def read_delimited(
             header=0 if has_header else None,
             usecols=list(columns) if columns is not None else None,
             nrows=nrows,
-            skiprows=(
-                range(1 if has_header else 0, row_offset + (1 if has_header else 0))
-                if row_offset
-                else None
-            ),
+            skiprows=skip_rows,
             dtype={name: str for name in TEXT_CODE_COLUMNS},
         )
     except (pd.errors.ParserError, UnicodeError, ValueError) as error:

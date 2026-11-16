@@ -14,6 +14,7 @@ from src.census_labels import (
     prepare_chart_series,
     unique_variable_labels,
     variable_label,
+    volunteer_donation_respondent_mask,
 )
 
 st.set_page_config(page_title="Census Data Explorer", page_icon="📊", layout="wide")
@@ -171,9 +172,31 @@ weight_column = st.selectbox(
     ),
     help="Weighted summaries are descriptive only and do not account for CPS survey-design standard errors.",
 )
+volunteer_filter_fields = []
+if is_recognized_cps_csv:
+    missing_donation_fields = [
+        name for name in ("PES17", "PES18") if name not in field_names
+    ]
+    volunteer_filter_fields = [
+        name for name in ("PES16", "PES16A") if name in field_names
+    ]
+    if missing_donation_fields or not volunteer_filter_fields:
+        missing_fields = missing_donation_fields or ["PES16 or PES16A"]
+        st.error(
+            "This Census file is missing the fields needed to identify people "
+            f"with volunteer and donation data: {', '.join(missing_fields)}."
+        )
+        st.stop()
+    volunteer_filter_fields.extend(
+        name for name in ("PES17", "PES18") if name in field_names
+    )
+
 columns_to_read = [variable]
 if weight_column != "Unweighted":
     columns_to_read.append(weight_column)
+columns_to_read.extend(
+    name for name in volunteer_filter_fields if name not in columns_to_read
+)
 
 try:
     uploaded_file.seek(0)
@@ -189,6 +212,21 @@ except (UnicodeDecodeError, ValueError, pd.errors.ParserError) as error:
 if data.empty:
     st.warning("No data rows were found in the uploaded CSV.")
     st.stop()
+
+if is_recognized_cps_csv:
+    try:
+        respondent_mask = volunteer_donation_respondent_mask(data)
+    except ValueError as error:
+        st.error(str(error))
+        st.stop()
+    eligible_row_positions = data.index[respondent_mask].tolist()
+    data = data.loc[respondent_mask].copy()
+    if data.empty:
+        st.warning(
+            "No people have applicable volunteer responses and responses to both "
+            "donation questions in this file."
+        )
+        st.stop()
 
 records = len(data)
 rows_per_page = st.selectbox(
@@ -216,12 +254,23 @@ try:
     uploaded_file.seek(0)
     file_text = io.TextIOWrapper(uploaded_file, encoding="utf-8-sig")
     try:
-        table_page = read_delimited(
-            file_text,
-            columns=table_columns,
-            nrows=rows_per_page,
-            row_offset=row_offset,
-        )
+        if is_recognized_cps_csv:
+            page_positions = eligible_row_positions[
+                row_offset : row_offset + rows_per_page
+            ]
+            table_page = read_delimited(
+                file_text,
+                columns=table_columns,
+                nrows=rows_per_page,
+                row_positions=page_positions,
+            )
+        else:
+            table_page = read_delimited(
+                file_text,
+                columns=table_columns,
+                nrows=rows_per_page,
+                row_offset=row_offset,
+            )
     finally:
         file_text.detach()
 except (UnicodeDecodeError, ValueError, pd.errors.ParserError) as error:
@@ -268,9 +317,10 @@ if is_recognized_cps_csv:
     )
     st.caption(
         f"Page {page_number:,} of {page_count:,}; showing {len(table_columns):,} "
-        f"of {len(field_names):,} columns. The chart and record count use all "
-        f"{records:,} rows. {'Census codes are shown' if include_codes else 'Census codes are hidden'}; "
-        "age and hours remain numeric."
+        f"of {len(field_names):,} columns. Showing {records:,} people with an "
+        "applicable response to at least one volunteering question and both "
+        "donation questions. No, don't know, refusals, and no-answer categories "
+        "are retained; only blank or not-in-universe screening responses are excluded."
     )
 else:
     st.dataframe(table_page, width="stretch")

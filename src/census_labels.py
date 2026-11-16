@@ -396,6 +396,44 @@ def unique_variable_labels(
     }
 
 
+def volunteer_donation_respondent_mask(frame: pd.DataFrame) -> pd.Series:
+    """Keep people with applicable volunteer and both donation responses.
+
+    Refusal, don't-know, and no-answer codes remain included as response
+    categories; only blank values and not-in-universe codes are excluded.
+    """
+    donation_fields = ("PES17", "PES18")
+    volunteer_fields = ("PES16", "PES16A")
+    required_fields = [*donation_fields]
+    missing_fields = [name for name in required_fields if name not in frame.columns]
+    available_volunteer_fields = [
+        name for name in volunteer_fields if name in frame.columns
+    ]
+    if missing_fields or not available_volunteer_fields:
+        missing_fields.extend(
+            [] if available_volunteer_fields else ["PES16 or PES16A"]
+        )
+        raise ValueError(
+            "Cannot filter this Census file for volunteer and donation data; "
+            f"missing required fields: {', '.join(missing_fields)}."
+        )
+
+    def has_response(values: pd.Series) -> pd.Series:
+        text = values.astype("string").str.strip()
+        numeric = pd.to_numeric(values, errors="coerce")
+        return values.notna() & text.ne("") & numeric.ne(-1).fillna(True)
+
+    has_volunteer_response = pd.concat(
+        [has_response(frame[name]) for name in available_volunteer_fields],
+        axis=1,
+    ).any(axis=1)
+    has_donation_responses = pd.concat(
+        [has_response(frame[name]) for name in donation_fields],
+        axis=1,
+    ).all(axis=1)
+    return has_volunteer_response & has_donation_responses
+
+
 def label_responses(
     name: str,
     values: pd.Series,
