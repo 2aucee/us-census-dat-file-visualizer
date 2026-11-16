@@ -33,7 +33,9 @@ uploaded_file = st.file_uploader(
 )
 
 if uploaded_file is None:
-    st.info("Upload a file to begin. For fixed-width files, you will also need its official record layout.")
+    st.info(
+        "Upload a file to begin. The SEP23PUB layout is included; other fixed-width files need their official record layout."
+    )
     st.stop()
 
 try:
