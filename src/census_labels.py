@@ -1,4 +1,4 @@
-"""Human-readable labels for common September 2023 CPS fields and responses."""
+"""Human-readable labels for common CPS fields and response categories."""
 
 from __future__ import annotations
 
@@ -272,3 +272,16 @@ def label_responses(
         return value
 
     return values.map(label).astype("string")
+
+
+def prepare_chart_series(
+    name: str, values: pd.Series, *, documented: bool = True
+) -> pd.Series:
+    """Keep numeric fields numeric while translating documented categories."""
+    if documented and name in RESPONSE_LABELS:
+        return label_responses(name, values)
+    if pd.api.types.is_numeric_dtype(values):
+        return pd.to_numeric(values, errors="coerce").mask(
+            values.isin(SPECIAL_RESPONSE_LABELS)
+        )
+    return label_responses(name, values, documented=documented)

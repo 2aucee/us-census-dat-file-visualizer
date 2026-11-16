@@ -16,10 +16,15 @@ from src.data_reader import (
     read_sep23pub_csv,
     read_sep23pub_file,
 )
-from src.census_labels import VARIABLE_LABELS, label_responses, variable_label
+from src.census_labels import (
+    VARIABLE_LABELS,
+    label_responses,
+    prepare_chart_series,
+    variable_label,
+)
 
 st.set_page_config(page_title="Census Data Explorer", page_icon="📊", layout="wide")
-sns.set_theme(style="whitegrid")
+sns.set_theme(style="whitegrid", context="notebook", palette="crest")
 
 st.title("Census Data Explorer")
 st.markdown(
@@ -33,6 +38,14 @@ uploaded_file = st.file_uploader(
     type=["dat", "txt", "csv", "tsv"],
 )
 
+preview_rows = st.selectbox(
+    "Rows to show in the preview",
+    [100, 500, 1_000],
+    index=1,
+    format_func=lambda rows: f"{rows:,} rows",
+    help="The preview is capped at 1,000 rows to keep wide files responsive.",
+)
+
 if uploaded_file is None:
     st.info(
         "Upload a file to begin. The SEP23PUB layout is included; other fixed-width files need their official record layout."
@@ -42,7 +55,11 @@ if uploaded_file is None:
 try:
     is_sep23pub = Path(uploaded_file.name).name.casefold() == "sep23pub.dat"
     is_sep23pub_csv = Path(uploaded_file.name).name.casefold() == "sep23pub.csv"
+    is_sep19pub_csv = Path(uploaded_file.name).name.casefold() == "sep19pub.csv"
     is_sep21pub_csv = Path(uploaded_file.name).name.casefold() == "sep21pub.csv"
+    is_recognized_cps_csv = (
+        is_sep19pub_csv or is_sep21pub_csv or is_sep23pub_csv
+    )
     is_streamed_delimited = False
     if is_sep23pub or is_sep23pub_csv:
         field_names, _ = load_sep23pub_layout()
@@ -72,7 +89,7 @@ try:
             )
             uploaded_file.seek(0)
             preview = read_sep23pub_csv(
-                uploaded_file, columns=preview_fields, nrows=100
+                uploaded_file, columns=preview_fields, nrows=preview_rows
             )
         else:
             st.info("Using the official Census layout for sep23pub.dat.")
@@ -80,7 +97,7 @@ try:
             file_text = io.TextIOWrapper(uploaded_file, encoding="utf-8-sig")
             try:
                 preview = read_sep23pub_file(
-                    file_text, columns=preview_fields, nrows=100
+                    file_text, columns=preview_fields, nrows=preview_rows
                 )
             finally:
                 file_text.detach()
@@ -113,7 +130,7 @@ try:
                     file_text,
                     delimiter=delimiter,
                     has_header=has_header,
-                    nrows=100,
+                    nrows=preview_rows,
                 )
             finally:
                 file_text.detach()
@@ -153,7 +170,7 @@ if use_sep23_layout:
             column, preview[column]
         )
     st.dataframe(readable_preview, width="stretch")
-    st.caption("Preview is limited to the first 100 records.")
+    st.caption(f"Preview shows up to {preview_rows:,} records.")
     st.caption(
         "CPS special values are spelled out where they occur (for example, "
         "Not in universe (-1), Don't know (-2), Refused (-3), and No answer (-9)). "
@@ -229,33 +246,42 @@ else:
 
     st.subheader("Data overview")
     if is_streamed_delimited:
-        if is_sep21pub_csv:
+        if is_recognized_cps_csv:
+            release = "2019" if is_sep19pub_csv else "2021" if is_sep21pub_csv else "2023"
             st.info(
-                "Recognized the September 2021 CPS CSV. The app previews 100 rows "
-                "and reads only the selected variable and optional weight."
+                f"Recognized the September {release} CPS CSV. The app reads only "
+                "the selected variable and optional weight across the full file."
             )
             readable_preview = preview.rename(columns=variable_label)
             for column in preview.columns:
                 readable_preview[variable_label(str(column))] = label_responses(
-                    str(column), preview[column], documented=False
+                    str(column),
+                    preview[column],
+                    documented=not is_sep21pub_csv,
                 )
             st.dataframe(readable_preview, width="stretch")
             st.caption(
-                "Not-in-universe values are shown as N/A. Other documented CPS "
-                "special codes keep their code with a plain-English description."
+                "Not-in-universe (-1) values are shown as N/A. Response labels "
+                "are shown when available; other values retain their original code."
             )
         else:
             st.dataframe(preview, width="stretch")
-        st.caption("Preview is limited to the first 100 rows.")
+        st.caption(f"Preview shows up to {preview_rows:,} rows.")
 
         st.subheader("Explore a variable")
         numeric_columns = preview.select_dtypes(include="number").columns.tolist()
+        default_variable = (
+            field_names.index("PRSUPVOL")
+            if is_recognized_cps_csv and "PRSUPVOL" in field_names
+            else 0
+        )
         variable = st.selectbox(
             "Variable to visualize",
             field_names,
+            index=default_variable,
             format_func=lambda name: (
                 variable_label(str(name))
-                if is_sep21pub_csv
+                if is_recognized_cps_csv
                 else str(name)
             ),
         )
@@ -267,7 +293,7 @@ else:
                 "Unweighted"
                 if name == "Unweighted"
                 else variable_label(str(name))
-                if is_sep21pub_csv
+                if is_recognized_cps_csv
                 else str(name)
             ),
             help="Weighted summaries are descriptive only; this does not account for CPS replicate weights or survey design.",
@@ -303,8 +329,8 @@ else:
         metric_columns[0].metric("Records", f"{len(data):,}")
         metric_columns[1].metric("Fields", f"{len(data.columns):,}")
         metric_columns[2].metric("Missing cells", f"{int(data.isna().sum().sum()):,}")
-        st.dataframe(data.head(100), width="stretch")
-        st.caption("Preview is limited to the first 100 rows.")
+        st.dataframe(data.head(preview_rows), width="stretch")
+        st.caption(f"Preview shows up to {preview_rows:,} rows.")
 
         st.subheader("Explore a variable")
         numeric_columns = data.select_dtypes(include="number").columns.tolist()
@@ -318,18 +344,32 @@ else:
         )
         detail_data = data
 
-if use_sep23_layout:
-    series = label_responses(variable, data[variable])
-elif is_sep21pub_csv:
-    series = label_responses(variable, data[variable], documented=False)
+if use_sep23_layout or is_recognized_cps_csv:
+    documented = not is_sep21pub_csv
+    series = prepare_chart_series(
+        variable, data[variable], documented=documented
+    )
 else:
     series = data[variable]
-plot_variable = variable_label(variable) if use_sep23_layout or is_sep21pub_csv else str(variable)
+plot_variable = (
+    variable_label(variable)
+    if use_sep23_layout or is_recognized_cps_csv
+    else str(variable)
+)
 is_numeric = pd.api.types.is_numeric_dtype(series)
 if is_numeric:
-    chart_type = st.radio("Chart", ["Distribution", "Summary statistics"], horizontal=True)
+    numeric_view = st.radio(
+        "Interpret numeric values as",
+        ["Numbers", "Category codes"],
+        horizontal=True,
+        help="Choose Category codes for variables whose numbers represent labeled groups.",
+    )
+    is_numeric = numeric_view == "Numbers"
+
+if is_numeric:
+    chart_type = st.selectbox("Chart", ["Histogram", "Box plot", "Summary statistics"])
     values = pd.to_numeric(series, errors="coerce")
-    if weight_column != "Unweighted" and chart_type == "Distribution":
+    if weight_column != "Unweighted" and chart_type == "Histogram":
         chart_data = pd.DataFrame(
             {"value": values, "weight": pd.to_numeric(data[weight_column], errors="coerce")}
         ).dropna()
@@ -339,17 +379,65 @@ if is_numeric:
 
     if chart_data.empty:
         st.warning("No valid values are available for this selection.")
-    elif chart_type == "Distribution":
-        figure, axis = plt.subplots(figsize=(9, 4))
+    elif chart_type == "Histogram":
+        figure, axis = plt.subplots(figsize=(10, 5), dpi=120)
         if "weight" in chart_data:
-            sns.histplot(data=chart_data, x="value", weights="weight", bins="auto", ax=axis)
+            sns.histplot(
+                data=chart_data,
+                x="value",
+                weights="weight",
+                bins="auto",
+                color="#2563EB",
+                edgecolor="white",
+                linewidth=0.6,
+                ax=axis,
+            )
             axis.set_ylabel("Weighted count")
         else:
-            sns.histplot(data=chart_data, x="value", bins="auto", ax=axis)
+            sns.histplot(
+                data=chart_data,
+                x="value",
+                bins="auto",
+                kde=values.nunique() > 10,
+                color="#2563EB",
+                edgecolor="white",
+                linewidth=0.6,
+                ax=axis,
+            )
             axis.set_ylabel("Count")
         axis.set_xlabel(plot_variable)
+        axis.set_title(f"Distribution of {plot_variable}", loc="left", weight="bold")
+        axis.grid(axis="y", alpha=0.25)
+        axis.grid(axis="x", visible=False)
+        sns.despine(ax=axis)
+        figure.tight_layout()
         st.pyplot(figure)
         plt.close(figure)
+    elif chart_type == "Box plot":
+        figure, axis = plt.subplots(figsize=(10, 3.5), dpi=120)
+        sns.boxplot(
+            x=chart_data["value"],
+            color="#60A5FA",
+            width=0.45,
+            showmeans=True,
+            meanprops={
+                "marker": "D",
+                "markerfacecolor": "#F97316",
+                "markeredgecolor": "white",
+                "markersize": 7,
+            },
+            ax=axis,
+        )
+        axis.set_xlabel(plot_variable)
+        axis.set_title(f"Spread of {plot_variable}", loc="left", weight="bold")
+        axis.grid(axis="x", alpha=0.25)
+        axis.grid(axis="y", visible=False)
+        sns.despine(ax=axis, left=True)
+        figure.tight_layout()
+        st.pyplot(figure)
+        plt.close(figure)
+        if weight_column != "Unweighted":
+            st.caption("Box plots are unweighted; the selected weight is not applied.")
     else:
         summary = chart_data["value"].describe().to_frame("value")
         if weight_column != "Unweighted":
@@ -361,6 +449,7 @@ if is_numeric:
                 summary.loc["weighted mean", "value"] = (
                     (valid["value"] * valid["weight"]).sum() / valid["weight"].sum()
                 )
+        summary.index.name = "Statistic"
         st.dataframe(summary, width="stretch")
 else:
     chart_data = pd.DataFrame({"value": series.astype("string")})
@@ -373,17 +462,74 @@ else:
     else:
         counts = chart_data["value"].value_counts(dropna=True)
         count_label = "Count"
-    counts = counts.nlargest(25).sort_values()
+    top_counts = counts.nlargest(10)
+    if len(counts) > len(top_counts):
+        top_counts.loc["Other categories"] = counts.drop(top_counts.index).sum()
+    counts = top_counts.sort_values()
     if counts.empty:
         st.warning("No valid values are available for this selection.")
     else:
-        figure, axis = plt.subplots(figsize=(9, max(4, min(9, len(counts) * 0.32))))
-        counts.plot.barh(ax=axis)
-        axis.set_xlabel(count_label)
-        axis.set_ylabel(plot_variable)
-        st.pyplot(figure)
-        plt.close(figure)
-        st.caption("Showing up to 25 most frequent categories.")
+        chart_type = st.selectbox("Chart", ["Bar chart", "Donut chart"])
+        if chart_type == "Bar chart":
+            figure, axis = plt.subplots(
+                figsize=(10, max(4, min(8, len(counts) * 0.42))),
+                dpi=120,
+            )
+            colors = sns.color_palette("crest", n_colors=len(counts))
+            bars = axis.barh(counts.index.astype(str), counts.values, color=colors)
+            axis.bar_label(bars, fmt="%.0f", padding=4, fontsize=9)
+            axis.set_xlabel(count_label)
+            axis.set_ylabel("")
+            axis.set_title(
+                f"Most common responses for {plot_variable}",
+                loc="left",
+                weight="bold",
+            )
+            axis.grid(axis="x", alpha=0.25)
+            axis.grid(axis="y", visible=False)
+            axis.set_axisbelow(True)
+            axis.margins(x=0.15)
+            sns.despine(ax=axis, left=True)
+            figure.tight_layout()
+            st.pyplot(figure)
+            plt.close(figure)
+        else:
+            donut_counts = counts.copy()
+            figure, axis = plt.subplots(figsize=(8, 5), dpi=120)
+            colors = sns.color_palette("crest", n_colors=len(donut_counts))
+            wedges, _, _ = axis.pie(
+                donut_counts.values,
+                startangle=90,
+                counterclock=False,
+                colors=colors,
+                wedgeprops={"width": 0.42, "edgecolor": "white", "linewidth": 2},
+                autopct=lambda pct: f"{pct:.0f}%" if pct >= 4 else "",
+                pctdistance=0.78,
+                textprops={"color": "#1F2937", "fontsize": 9},
+            )
+            axis.text(
+                0,
+                0,
+                f"{len(donut_counts)}\nresponses",
+                ha="center",
+                va="center",
+                fontsize=12,
+                weight="bold",
+                color="#1F2937",
+            )
+            axis.legend(
+                wedges,
+                [str(category) for category in donut_counts.index],
+                title=plot_variable,
+                loc="center left",
+                bbox_to_anchor=(1, 0.5),
+                frameon=False,
+            )
+            axis.set_title("Response share", loc="left", weight="bold")
+            figure.tight_layout()
+            st.pyplot(figure)
+            plt.close(figure)
+        st.caption("Showing the top 10 categories; remaining values are grouped as Other.")
 
 with st.expander("Field details"):
     details = pd.DataFrame(
@@ -394,5 +540,7 @@ with st.expander("Field details"):
         }
     )
     st.dataframe(details, width="stretch")
-    if use_sep23_layout or is_sep21pub_csv:
-        st.caption("Field details are calculated from the 100-row preview.")
+    if use_sep23_layout or is_recognized_cps_csv:
+        st.caption(
+            f"Field details are calculated from the {preview_rows:,}-row preview."
+        )

@@ -12,7 +12,11 @@ from src.data_reader import (
     read_sep23pub_csv,
     read_sep23pub_file,
 )
-from src.census_labels import label_responses, variable_label
+from src.census_labels import (
+    label_responses,
+    prepare_chart_series,
+    variable_label,
+)
 
 
 def test_read_delimited_with_header():
@@ -77,6 +81,28 @@ def test_census_variables_and_documented_categories_are_readable():
     assert str(label_responses("PRSUPVOL", pd.Series([-1, 1, 2])).dtype) == "string"
 
 
+def test_cps_demographic_and_supplement_codes_have_readable_labels():
+    assert label_responses("GEREG", pd.Series([1, 4])).tolist() == [
+        "Northeast (1)",
+        "West (4)",
+    ]
+    assert label_responses("PESEX", pd.Series([1, 2])).tolist() == [
+        "Male (1)",
+        "Female (2)",
+    ]
+    assert label_responses("PRMARSTA", pd.Series([1, 7])).tolist() == [
+        "Married, civilian spouse present (1)",
+        "Never married (7)",
+    ]
+    assert label_responses("PES11", pd.Series([-1, -2, -3, -9, 3])).tolist() == [
+        "N/A",
+        "Don't know (-2)",
+        "Refused (-3)",
+        "No answer (-9)",
+        "Not eligible to vote (3)",
+    ]
+
+
 def test_common_cps_special_codes_are_labeled_for_other_fields():
     assert label_responses(
         "PES99", pd.Series([-9, -3, -2, -1, 1])
@@ -97,6 +123,23 @@ def test_not_in_universe_is_n_a_for_documented_and_undocumented_fields():
     assert label_responses(
         "PES16D", pd.Series([-1, 5]), documented=False
     ).tolist() == ["N/A", "5"]
+
+
+def test_chart_series_keeps_numeric_measurements_numeric():
+    series = prepare_chart_series("PRTAGE", pd.Series([-1, 25]))
+    assert pd.isna(series.iloc[0])
+    assert series.iloc[1] == 25
+    assert pd.api.types.is_numeric_dtype(series)
+
+
+def test_chart_series_labels_documented_categorical_fields():
+    assert prepare_chart_series(
+        "PRSUPVOL", pd.Series([-1, 1, 2])
+    ).tolist() == [
+        "N/A",
+        "Volunteer (1)",
+        "Not a volunteer (2)",
+    ]
 
 
 def test_parse_fixed_width_layout_and_read():
